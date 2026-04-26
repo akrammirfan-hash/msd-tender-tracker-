@@ -1,537 +1,268 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>IBL Healthcare · MSD Tender Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
-  :root {
-    --navy:   #0a1628;
-    --navy2:  #1b2a3b;
-    --gold:   #c8963c;
-    --gold-lt:#f0b429;
-    --white:  #ffffff;
-    --bg:     #f8f9fa;
-    --bg2:    #f1f3f5;
-    --border: #e2e8f0;
-    --text:   #0f172a;
-    --text2:  #475569;
-    --text3:  #94a3b8;
-    --green:  #16a34a;
-    --green-lt:#dcfce7;
-    --red:    #dc2626;
-    --red-lt: #fee2e2;
-    --amber:  #d97706;
-    --amber-lt:#fef3c7;
-    --blue:   #2563eb;
-    --blue-lt:#dbeafe;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
-
-  /* ── HEADER ── */
-  .header { background: var(--navy); color: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.25); }
-  .header-brand { display: flex; align-items: center; gap: 12px; }
-  .brand-mark { width: 38px; height: 38px; background: var(--gold); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: .5px; flex-shrink: 0; }
-  .brand-name { font-size: 15px; font-weight: 600; letter-spacing: .3px; }
-  .brand-sub  { font-size: 11px; color: #9ba8b8; margin-top: 2px; }
-  .header-right { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
-  .header-clock { font-size: 20px; font-weight: 600; letter-spacing: 1px; font-variant-numeric: tabular-nums; }
-  .header-date  { font-size: 11px; color: #6b7c93; margin-top: 2px; }
-  .refresh-info { text-align: right; }
-  .refresh-label { font-size: 11px; color: #9ba8b8; }
-  .refresh-pill  { display: inline-flex; align-items: center; gap: 6px; background: #1b2a3b; border-radius: 20px; padding: 4px 12px; font-size: 11px; color: #9ba8b8; margin-top: 4px; }
-  .pulse { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; flex-shrink: 0; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-
-  /* ── ALERT BANNER ── */
-  .alert-banner { background: #fff7ed; border-left: 4px solid var(--amber); padding: 10px 28px; font-size: 12px; color: #92400e; display: flex; align-items: center; gap: 8px; }
-  .alert-icon { width: 18px; height: 18px; border-radius: 50%; background: var(--amber); color: #fff; font-weight: 700; font-size: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-
-  /* ── LAYOUT ── */
-  .main { max-width: 1400px; margin: 0 auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 24px; }
-  .section-hdr { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 14px; }
-
-  /* ── KPI GRID ── */
-  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-  .kpi-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
-  .kpi-label { font-size: 11px; color: var(--text2); margin-bottom: 8px; font-weight: 500; }
-  .kpi-val   { font-size: 30px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
-  .kpi-sub   { font-size: 11px; color: var(--text3); margin-top: 6px; }
-  .kpi-prog  { height: 3px; background: var(--border); border-radius: 2px; margin-top: 10px; }
-  .kpi-prog-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
-
-  /* ── TWO COL ── */
-  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  @media(max-width:768px) { .two-col { grid-template-columns: 1fr; } }
-
-  /* ── CARD ── */
-  .card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
-
-  /* ── TABLE ── */
-  table { width: 100%; border-collapse: collapse; }
-  th { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: .5px; text-transform: uppercase; text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  th.r,td.r { text-align: right; }
-  td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr.total td { background: var(--bg2); font-weight: 700; border-top: 1px solid var(--border); }
-  tr:hover:not(.total) td { background: var(--bg); }
-
-  /* ── BADGES ── */
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-  .g { background: var(--green-lt); color: #166534; }
-  .r { background: var(--red-lt);   color: #991b1b; }
-  .a { background: var(--amber-lt); color: #92400e; }
-  .b { background: var(--blue-lt);  color: #1e40af; }
-  .n { background: var(--bg2);      color: var(--text2); }
-
-  /* ── PROGRESS ── */
-  .prog-wrap { display: inline-flex; align-items: center; gap: 6px; }
-  .prog-bar  { width: 70px; height: 4px; background: var(--border); border-radius: 2px; }
-  .prog-fill { height: 100%; border-radius: 2px; }
-
-  /* ── FUNNEL ── */
-  .funnel { display: grid; grid-template-columns: repeat(6, 1fr); background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-  @media(max-width:700px) { .funnel { grid-template-columns: repeat(3,1fr); } }
-  .funnel-stage { padding: 16px 12px; text-align: center; border-right: 1px solid var(--border); }
-  .funnel-stage:last-child { border-right: none; }
-  .funnel-stage:nth-child(odd) { background: var(--bg2); }
-  .f-label { font-size: 10px; color: var(--text2); line-height: 1.4; margin-bottom: 8px; }
-  .f-val   { font-size: 28px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
-  .f-pct   { font-size: 10px; color: var(--text3); margin-top: 5px; }
-  .f-bar   { height: 3px; background: var(--border); border-radius: 2px; margin-top: 10px; }
-  .f-fill  { height: 100%; border-radius: 2px; transition: width 1.2s ease; }
-
-  /* ── ALERTS ── */
-  .alert-table tbody tr:hover td { opacity: .85; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-
-  /* ── STATUS ── */
-  .status-bar { display: flex; align-items: center; gap: 12px; font-size: 11px; color: var(--text3); background: var(--navy); padding: 8px 28px; flex-wrap: wrap; justify-content: space-between; }
-  .status-live { color: #22c55e; font-weight: 600; }
-
-  /* ── LOADER ── */
-  .loader { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; gap: 14px; }
-  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 1s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── CONNECT BANNER ── */
-  .connect-banner { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 28px; text-align: center; }
-  .connect-banner h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
-  .connect-banner p { color: var(--text2); font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
-  .url-input { width: 100%; max-width: 600px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; outline: none; font-family: monospace; }
-  .url-input:focus { border-color: var(--navy); }
-  .btn { display: inline-block; background: var(--navy); color: #fff; padding: 10px 24px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; margin-top: 10px; transition: background .15s; }
-  .btn:hover { background: var(--navy2); }
-  .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border); }
-  .btn-secondary:hover { background: var(--border); }
-  .steps { text-align: left; max-width: 500px; margin: 20px auto 0; }
-  .step { display: flex; gap: 12px; margin-bottom: 14px; font-size: 12px; color: var(--text2); }
-  .step-num { width: 22px; height: 22px; background: var(--navy); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
-
-  /* ── RESPONSIVE ── */
-  @media(max-width:600px) {
-    .main { padding: 16px; }
-    .header { padding: 12px 16px; }
-    .header-clock { font-size: 16px; }
-    .kpi-val { font-size: 24px; }
-    .f-val { font-size: 22px; }
-  }
+:root{--navy:#0a1628;--navy2:#1b2a3b;--gold:#c8963c;--white:#ffffff;--bg:#f8f9fa;--bg2:#f1f3f5;--border:#e2e8f0;--text:#0f172a;--text2:#475569;--text3:#94a3b8;--green:#16a34a;--green-lt:#dcfce7;--red:#dc2626;--red-lt:#fee2e2;--amber:#d97706;--amber-lt:#fef3c7;--blue:#2563eb;--blue-lt:#dbeafe}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:13px}
+.header{background:var(--navy);color:#fff;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.header-brand{display:flex;align-items:center;gap:12px}
+.brand-mark{width:38px;height:38px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.brand-name{font-size:15px;font-weight:600}.brand-sub{font-size:11px;color:#9ba8b8;margin-top:2px}
+.header-right{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.header-clock{font-size:20px;font-weight:600;letter-spacing:1px;font-variant-numeric:tabular-nums}
+.header-date{font-size:11px;color:#6b7c93;margin-top:2px}
+.refresh-pill{display:inline-flex;align-items:center;gap:6px;background:#1b2a3b;border-radius:20px;padding:4px 12px;font-size:11px;color:#9ba8b8;margin-top:4px}
+.pulse{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.edit-btn{background:none;border:1px solid #2d4a6b;border-radius:5px;color:#9ba8b8;padding:3px 10px;font-size:10px;cursor:pointer;margin-left:6px}
+.edit-btn:hover{background:#243447;color:#fff}
+.alert-banner{background:#fff7ed;border-left:4px solid var(--amber);padding:10px 28px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.alert-icon{width:18px;height:18px;border-radius:50%;background:var(--amber);color:#fff;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.main{max-width:1400px;margin:0 auto;padding:24px 28px;display:flex;flex-direction:column;gap:24px}
+.section-hdr{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:14px}
+/* CONNECT */
+.connect-wrap{display:flex;justify-content:center}
+.connect-box{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:32px;width:100%;max-width:660px}
+.connect-title{font-size:18px;font-weight:700;color:var(--navy);text-align:center;margin-bottom:6px}
+.connect-sub{font-size:13px;color:var(--text2);text-align:center;line-height:1.6;margin-bottom:28px}
+.url-group{margin-bottom:18px}
+.url-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px}
+.div-pill{display:inline-block;padding:2px 9px;border-radius:4px;font-size:10px;font-weight:700;color:#fff}
+.pill-hc{background:#2563eb}.pill-cc{background:#7c3aed}.pill-mc{background:#0f766e}
+.url-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:monospace;outline:none;background:var(--bg);transition:border .15s}
+.url-input:focus{border-color:var(--navy);background:var(--white)}
+.url-hint{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.4}
+.btn-row{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.btn{padding:11px 20px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;flex:1;min-width:120px;transition:all .15s}
+.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy2)}
+.btn-demo{background:var(--bg2);color:var(--text);border:1px solid var(--border)}.btn-demo:hover{background:var(--border)}
+.status-box{padding:10px 14px;border-radius:8px;font-size:12px;margin-top:14px;display:none}
+.s-ok{background:var(--green-lt);color:#166534;border:1px solid #bbf7d0}
+.s-err{background:var(--red-lt);color:#991b1b;border:1px solid #fecaca}
+.steps-hdr{font-size:11px;font-weight:600;color:var(--text3);margin:22px 0 10px;padding-top:18px;border-top:1px solid var(--border)}
+.step-row{display:flex;gap:10px;margin-bottom:9px;font-size:12px;color:var(--text2);line-height:1.5}
+.step-num{width:20px;height:20px;background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+/* DASHBOARD */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.kpi-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.kpi-label{font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:500}
+.kpi-val{font-size:30px;font-weight:700;letter-spacing:-1.5px;line-height:1}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:6px}
+.kpi-prog{height:3px;background:var(--border);border-radius:2px;margin-top:10px}
+.kpi-prog-fill{height:100%;border-radius:2px;transition:width 1s ease}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:768px){.two-col{grid-template-columns:1fr}}
+.card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:20px}
+table{width:100%;border-collapse:collapse}
+th{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+th.r,td.r{text-align:right}
+td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.tot td{background:var(--bg2);font-weight:700;border-top:1px solid var(--border)}
+tr:hover:not(.tot) td{background:var(--bg)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.g{background:var(--green-lt);color:#166534}.r{background:var(--red-lt);color:#991b1b}
+.a{background:var(--amber-lt);color:#92400e}.b{background:var(--blue-lt);color:#1e40af}.n{background:var(--bg2);color:var(--text2)}
+.pw{display:inline-flex;align-items:center;gap:6px}
+.pb{width:70px;height:4px;background:var(--border);border-radius:2px}
+.pf{height:100%;border-radius:2px}
+.funnel{display:grid;grid-template-columns:repeat(6,1fr);background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+@media(max-width:700px){.funnel{grid-template-columns:repeat(3,1fr)}}
+.fs{padding:16px 12px;text-align:center;border-right:1px solid var(--border)}
+.fs:last-child{border-right:none}.fs:nth-child(odd){background:var(--bg2)}
+.fl{font-size:10px;color:var(--text2);line-height:1.4;margin-bottom:8px}
+.fv{font-size:28px;font-weight:700;letter-spacing:-1px;line-height:1}
+.fp{font-size:10px;color:var(--text3);margin-top:5px}
+.fb{height:3px;background:var(--border);border-radius:2px;margin-top:10px}
+.ff{height:100%;border-radius:2px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.footer{background:var(--navy);color:#6b7c93;font-size:11px;padding:8px 28px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+.live{color:#22c55e;font-weight:600}
+@media(max-width:600px){.main{padding:16px}.header{padding:12px 16px}.header-clock{font-size:16px}.kpi-val{font-size:24px}.fv{font-size:20px}}
 </style>
 </head>
 <body>
-
-<!-- HEADER -->
 <header class="header">
   <div class="header-brand">
     <div class="brand-mark">IBL</div>
-    <div>
-      <div class="brand-name">IBL Healthcare · MSD Division</div>
-      <div class="brand-sub">Tender Progression Tracker — FY 2025–26</div>
-    </div>
+    <div><div class="brand-name">IBL Healthcare · MSD Division</div><div class="brand-sub">Tender Progression Tracker — FY 2025–26</div></div>
   </div>
   <div class="header-right">
+    <div><div class="header-clock" id="clk">--:--:--</div><div class="header-date" id="dt"></div></div>
     <div>
-      <div class="header-clock" id="clock">--:--:--</div>
-      <div class="header-date" id="hdr-date">Loading...</div>
-    </div>
-    <div class="refresh-info">
-      <div class="refresh-label">Last refreshed: <span id="last-refreshed">—</span></div>
+      <div style="font-size:11px;color:#9ba8b8">Refreshed: <span id="ref">—</span></div>
       <div class="refresh-pill">
-        <div class="pulse"></div>
-        <span id="countdown">Refreshing in 5:00</span>
+        <div class="pulse"></div><span id="cd">5:00</span>
+        <button class="edit-btn" id="edit-btn" onclick="showConnect()" style="display:none">✎ Edit sheets</button>
       </div>
     </div>
   </div>
 </header>
-
-<!-- ALERT BANNER -->
-<div class="alert-banner" id="alert-banner" style="display:none">
-  <div class="alert-icon">!</div>
-  <span id="alert-text"></span>
-</div>
-
-<!-- MAIN -->
-<main class="main" id="main-content">
-
-  <!-- CONNECT PANEL (shown before sheet is configured) -->
-  <div class="connect-banner" id="connect-panel">
-    <h2>Connect your Google Sheet</h2>
-    <p>Publish your MSD tracker sheet to the web, paste the CSV link below,<br>and the dashboard will auto-refresh every 5 minutes — no code needed.</p>
-    <input class="url-input" id="sheet-url" type="text"
-      placeholder="https://docs.google.com/spreadsheets/d/YOUR_ID/export?format=csv&gid=0"
-      value=""/>
-    <br>
-    <button class="btn" onclick="connectSheet()">Connect &amp; load data</button>
-    &nbsp;
-    <button class="btn btn-secondary" onclick="loadDemo()">Preview with sample data</button>
-    <div class="steps">
-      <div class="step"><div class="step-num">1</div><div>Open your Google Sheet → File → Share → Publish to web → select <em>Comma-separated values (.csv)</em> → Publish</div></div>
-      <div class="step"><div class="step-num">2</div><div>Copy the URL and paste it above. Paste one per division (Hospicare, Critical Care, Medical Care)</div></div>
-      <div class="step"><div class="step-num">3</div><div>Dashboard auto-refreshes every 5 minutes. Share the Vercel URL with anyone — no login required</div></div>
-    </div>
+<div class="alert-banner" id="ab" style="display:none"><div class="alert-icon">!</div><span id="at"></span></div>
+<main class="main">
+  <div id="cp">
+    <div class="connect-wrap"><div class="connect-box">
+      <div class="connect-title">Connect your Google Sheets</div>
+      <div class="connect-sub">Paste one CSV URL per division below.<br>The dashboard reads all 3 live and auto-refreshes every 5 minutes.</div>
+      <div class="url-group">
+        <div class="url-label"><span class="div-pill pill-hc">HC</span> Hospicare — CSV URL</div>
+        <input class="url-input" id="u-hc" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=0&single=true&output=csv"/>
+        <div class="url-hint">In Google Sheets → File → Share → Publish to web → select <strong>Hospicare</strong> tab → CSV → Publish → copy URL</div>
+      </div>
+      <div class="url-group">
+        <div class="url-label"><span class="div-pill pill-cc">CC</span> Critical Care — CSV URL</div>
+        <input class="url-input" id="u-cc" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv"/>
+        <div class="url-hint">Same steps → select <strong>Critical Care</strong> tab → CSV → Publish → copy URL (different gid= number)</div>
+      </div>
+      <div class="url-group">
+        <div class="url-label"><span class="div-pill pill-mc">MC</span> Medical Care — CSV URL</div>
+        <input class="url-input" id="u-mc" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv"/>
+        <div class="url-hint">Same steps → select <strong>Medical Care</strong> tab → CSV → Publish → copy URL (different gid= number)</div>
+      </div>
+      <div id="sb" class="status-box"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="connect()">Connect all 3 &amp; load dashboard</button>
+        <button class="btn btn-demo" onclick="demo()">Preview with sample data</button>
+      </div>
+      <div class="steps-hdr">How to get the CSV URL for each tab</div>
+      <div class="step-row"><div class="step-num">1</div><div>Open your Google Sheet → click <strong>File → Share → Publish to web</strong></div></div>
+      <div class="step-row"><div class="step-num">2</div><div>First dropdown → select the tab name e.g. <strong>Hospicare</strong></div></div>
+      <div class="step-row"><div class="step-num">3</div><div>Second dropdown → select <strong>Comma-separated values (.csv)</strong></div></div>
+      <div class="step-row"><div class="step-num">4</div><div>Click <strong>Publish</strong> → copy the URL that appears → paste above</div></div>
+      <div class="step-row"><div class="step-num">5</div><div>Repeat for <strong>Critical Care</strong> and <strong>Medical Care</strong> tabs — each gives a different URL</div></div>
+    </div></div>
   </div>
-
-  <!-- DASHBOARD (hidden until data loads) -->
-  <div id="dashboard" style="display:none">
-
-    <!-- KPIs -->
-    <section>
-      <div class="section-hdr">Pipeline scorecard</div>
-      <div class="kpi-grid" id="kpi-grid"></div>
-    </section>
-
-    <!-- DIVISION + PORTFOLIO -->
+  <div id="db" style="display:none">
+    <section><div class="section-hdr">Pipeline scorecard</div><div class="kpi-grid" id="kg"></div></section>
     <div class="two-col">
-      <div class="card">
-        <div class="section-hdr">Division breakdown</div>
-        <table id="div-table"></table>
-      </div>
-      <div class="card">
-        <div class="section-hdr">Contract portfolio (PKR)</div>
-        <table id="port-table"></table>
-      </div>
+      <div class="card"><div class="section-hdr">Division breakdown</div><table id="dt2"></table></div>
+      <div class="card"><div class="section-hdr">Contract portfolio (PKR)</div><table id="pt"></table></div>
     </div>
-
-    <!-- FUNNEL -->
-    <section>
-      <div class="section-hdr">Procurement milestone funnel — all divisions</div>
-      <div class="funnel" id="funnel"></div>
-    </section>
-
-    <!-- ALERTS -->
-    <section>
-      <div class="section-hdr">Open alerts — intervention required</div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <table id="alert-table" class="alert-table"></table>
-      </div>
-    </section>
-
+    <section><div class="section-hdr">Procurement milestone funnel</div><div class="funnel" id="fn"></div></section>
+    <section><div class="section-hdr">Open alerts — intervention required</div><div class="card" style="padding:0;overflow:hidden"><table id="at2"></table></div></section>
   </div>
 </main>
-
-<!-- STATUS BAR -->
-<footer class="status-bar">
-  <span>Data: <span id="source-label">—</span></span>
-  <span class="status-live" id="status-live">● Live</span>
+<footer class="footer">
+  <span>Source: <span id="sl">—</span></span>
+  <span class="live" id="ll">● Live</span>
 </footer>
-
 <script>
-// ─── CONFIG: paste your published CSV URLs here ───────────────────────────────
-// After publishing each sheet tab, replace these URLs
-const CONFIG = {
-  sheets: {
-    // Format: https://docs.google.com/spreadsheets/d/SHEET_ID/export?format=csv&gid=TAB_GID
-    hospicare:    localStorage.getItem('url_hc')  || '',
-    criticalCare: localStorage.getItem('url_cc')  || '',
-    medicalCare:  localStorage.getItem('url_mc')  || '',
-  },
-  refreshInterval: 5 * 60 * 1000, // 5 minutes in ms
-};
-
-// ─── STATIC DEMO DATA (from your Excel) ──────────────────────────────────────
-const DEMO = {
-  hospicare:    { total:89,  won:73, po:63, suppYes:30, suppNo:32, dtl:25, paid:9,  cval:795440055  },
-  criticalCare: { total:40,  won:26, po:25, suppYes:24, suppNo:3,  dtl:20, paid:1,  cval:1066912835 },
-  medicalCare:  { total:78,  won:68, po:59, suppYes:29, suppNo:20, dtl:8,  paid:12, cval:250216346  },
-};
-
-// ─── CLOCK ────────────────────────────────────────────────────────────────────
-const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-let refreshCountdown = 300;
-let lastRefreshed = new Date();
-
-function fmtTime(d) {
-  let h=d.getHours(), m=d.getMinutes(), s=d.getSeconds();
-  const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
-  return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ap}`;
+const D=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let cd=300,lr=new Date();
+function ft(d){let h=d.getHours(),m=d.getMinutes(),s=d.getSeconds();const a=h>=12?'PM':'AM';h=h%12||12;return`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${a}`}
+function fd(d){return`${D[d.getDay()]}, ${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`}
+function fs(d){return`${String(d.getHours()%12||12).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${d.getHours()>=12?'PM':'AM'}`}
+function fp(n){if(!n||isNaN(n))return'—';if(n>=1e9)return'PKR '+(n/1e9).toFixed(2)+'B';if(n>=1e6)return'PKR '+(n/1e6).toFixed(1)+'M';return'PKR '+Math.round(n).toLocaleString()}
+function pc(a,b){return b?Math.round(a/b*100):0}
+function tick(){
+  const now=new Date();
+  document.getElementById('clk').textContent=ft(now);
+  document.getElementById('dt').textContent=fd(now);
+  document.getElementById('ref').textContent=fs(lr);
+  cd--;
+  if(cd<=0){cd=300;lr=new Date();load();}
+  const m=Math.floor(cd/60),s=cd%60;
+  document.getElementById('cd').textContent=`${m}:${String(s).padStart(2,'0')}`;
 }
-function fmtDate(d) { return `${DAYS[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`; }
-function fmtShort(d) { return `${String(d.getHours()%12||12).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${d.getHours()>=12?'PM':'AM'}`; }
-function fmtPKR(n) {
-  if (!n || isNaN(n)) return '—';
-  if (n >= 1e9) return (n/1e9).toFixed(2) + 'B';
-  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
-  return n.toLocaleString();
+tick();setInterval(tick,1000);
+
+function parse(csv){
+  const r=Papa.parse(csv,{header:true,skipEmptyLines:true});
+  const rows=r.data;if(!rows.length)return null;
+  const h=Object.keys(rows[0]);
+  function f(...kw){return h.find(x=>kw.every(k=>x.toLowerCase().includes(k.toLowerCase())))||null}
+  const aC=f('contract','award')||f('award'),sC=f('supplies','deliver')||f('supply','deliver');
+  const pC=f('po number')||f('po','number'),pyC=f('payment','received');
+  const dC=f('dtl')||f('test','opening'),cvC=f('contract','value')||f('contractvalue');
+  function cnt(c,v){return c?rows.filter(r=>(r[c]||'').trim().toLowerCase()===v.toLowerCase()).length:0}
+  function nb(c){return c?rows.filter(r=>{const v=(r[c]||'').trim().toLowerCase();return v&&v!=='nan'&&v!=='none'}).length:0}
+  function cs(){if(!cvC||!aC)return 0;return rows.reduce((s,r)=>{if((r[aC]||'').toLowerCase()==='yes'){const v=parseFloat((r[cvC]||'').replace(/,/g,''));if(!isNaN(v))s+=v;}return s;},0)}
+  return{total:rows.length,won:cnt(aC,'yes'),po:nb(pC),suppYes:cnt(sC,'yes'),suppNo:cnt(sC,'no'),dtl:nb(dC),paid:nb(pyC),cval:cs()}
 }
 
-function tick() {
-  const now = new Date();
-  document.getElementById('clock').textContent = fmtTime(now);
-  document.getElementById('hdr-date').textContent = fmtDate(now);
-  document.getElementById('last-refreshed').textContent = fmtShort(lastRefreshed);
-  refreshCountdown--;
-  if (refreshCountdown <= 0) {
-    refreshCountdown = 300;
-    lastRefreshed = new Date();
-    loadData(); // auto-refresh fires here
-  }
-  const m = Math.floor(refreshCountdown / 60), s = refreshCountdown % 60;
-  document.getElementById('countdown').textContent = `Refreshing in ${m}:${String(s).padStart(2,'0')}`;
-}
-tick();
-setInterval(tick, 1000);
+const DEMO={hospicare:{total:89,won:73,po:63,suppYes:30,suppNo:32,dtl:25,paid:9,cval:795440055},criticalCare:{total:40,won:26,po:25,suppYes:24,suppNo:3,dtl:20,paid:1,cval:1066912835},medicalCare:{total:78,won:68,po:59,suppYes:29,suppNo:20,dtl:8,paid:12,cval:250216346}};
 
-// ─── DATA PARSING ─────────────────────────────────────────────────────────────
-function parseSheet(csvText, sheetName) {
-  const result = Papa.parse(csvText, { header: true, skipEmptyLines: true });
-  const rows = result.data;
-  if (!rows.length) return null;
-
-  const headers = Object.keys(rows[0]);
-  function findCol(...kws) {
-    return headers.find(h => kws.every(k => h.toLowerCase().includes(k.toLowerCase()))) || null;
-  }
-
-  const awardC  = findCol('contract','award') || findCol('award');
-  const suppC   = findCol('supplies','deliver') || findCol('supply','deliver');
-  const poC     = findCol('po number') || findCol('po','number');
-  const payC    = findCol('payment','received');
-  const dtlC    = findCol('dtl') || findCol('test','opening');
-  const cvalC   = findCol('contract','value') || findCol('contractvalue');
-
-  function cnt(col, val) {
-    if (!col) return 0;
-    return rows.filter(r => (r[col]||'').trim().toLowerCase() === val.toLowerCase()).length;
-  }
-  function nonblank(col) {
-    if (!col) return 0;
-    return rows.filter(r => (r[col]||'').trim() && (r[col]||'').trim().toLowerCase() !== 'nan').length;
-  }
-  function cvalSum() {
-    if (!cvalC || !awardC) return 0;
-    return rows.reduce((s,r) => {
-      if ((r[awardC]||'').trim().toLowerCase() === 'yes') {
-        const v = parseFloat((r[cvalC]||'').replace(/,/g,''));
-        if (!isNaN(v)) s += v;
-      }
-      return s;
-    }, 0);
-  }
-
-  return {
-    total: rows.length,
-    won: cnt(awardC, 'yes'),
-    po: nonblank(poC),
-    suppYes: cnt(suppC, 'yes'),
-    suppNo: cnt(suppC, 'no'),
-    dtl: nonblank(dtlC),
-    paid: nonblank(payC),
-    cval: cvalSum(),
-  };
-}
-
-// ─── RENDER ───────────────────────────────────────────────────────────────────
-function renderDashboard(data) {
-  const t = {
-    total:   data.hospicare.total + data.criticalCare.total + data.medicalCare.total,
-    won:     data.hospicare.won   + data.criticalCare.won   + data.medicalCare.won,
-    po:      data.hospicare.po    + data.criticalCare.po    + data.medicalCare.po,
-    suppYes: data.hospicare.suppYes + data.criticalCare.suppYes + data.medicalCare.suppYes,
-    suppNo:  data.hospicare.suppNo  + data.criticalCare.suppNo  + data.medicalCare.suppNo,
-    dtl:     data.hospicare.dtl   + data.criticalCare.dtl   + data.medicalCare.dtl,
-    paid:    data.hospicare.paid  + data.criticalCare.paid  + data.medicalCare.paid,
-    cval:    data.hospicare.cval  + data.criticalCare.cval  + data.medicalCare.cval,
-  };
-
-  // Alert banner
-  if (t.suppNo > 0) {
-    const ab = document.getElementById('alert-banner');
-    ab.style.display = 'flex';
-    document.getElementById('alert-text').innerHTML =
-      `<strong>${t.suppNo} supply orders pending</strong> delivery across all divisions — immediate follow-up required. &nbsp;|&nbsp; <strong>${t.paid}</strong> of ${t.won} awarded contracts have confirmed payments.`;
-  }
-
-  // KPIs
-  const kpis = [
-    { label:'Total entries',    val:t.total,   sub:'All divisions', pct:100,  color:'#0a1628' },
-    { label:'Contracts won',    val:t.won,     sub:Math.round(t.won/t.total*100)+'% win rate', pct:Math.round(t.won/t.total*100), color:'#16a34a' },
-    { label:'POs generated',    val:t.po,      sub:Math.round(t.po/t.won*100)+'% of contracts', pct:Math.round(t.po/t.won*100), color:'#2563eb' },
-    { label:'Supplies done',    val:t.suppYes, sub:Math.round(t.suppYes/t.po*100)+'% of POs', pct:Math.round(t.suppYes/t.po*100), color:'#16a34a' },
-    { label:'Supply pending',   val:t.suppNo,  sub:'Critical — action needed', pct:Math.round(t.suppNo/t.po*100), color:'#dc2626' },
-    { label:'Payments cleared', val:t.paid,    sub:Math.round(t.paid/t.won*100)+'% recovery rate', pct:Math.round(t.paid/t.won*100), color:'#d97706' },
+function render(data){
+  const t={};['total','won','po','suppYes','suppNo','dtl','paid','cval'].forEach(k=>{t[k]=(data.hospicare[k]||0)+(data.criticalCare[k]||0)+(data.medicalCare[k]||0)});
+  if(t.suppNo>0){document.getElementById('ab').style.display='flex';document.getElementById('at').innerHTML=`<strong>${t.suppNo} supply orders pending</strong> — contract awarded, delivery not confirmed. &nbsp;|&nbsp; <strong>${t.paid}</strong> of ${t.won} contracts have confirmed payments.`}
+  document.getElementById('kg').innerHTML=[
+    {l:'Total entries',v:t.total,s:'All divisions',p:100,c:'#0a1628'},
+    {l:'Contracts won',v:t.won,s:pc(t.won,t.total)+'% win rate',p:pc(t.won,t.total),c:'#16a34a'},
+    {l:'POs generated',v:t.po,s:pc(t.po,t.won)+'% of contracts',p:pc(t.po,t.won),c:'#2563eb'},
+    {l:'Supplies done',v:t.suppYes,s:pc(t.suppYes,t.po)+'% of POs',p:pc(t.suppYes,t.po),c:'#16a34a'},
+    {l:'Supply pending',v:t.suppNo,s:'Critical — action needed',p:pc(t.suppNo,t.po),c:'#dc2626'},
+    {l:'Payments cleared',v:t.paid,s:pc(t.paid,t.won)+'% recovery',p:pc(t.paid,t.won),c:'#d97706'},
+  ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.l}</div><div class="kpi-val" style="color:${k.c}">${k.v}</div><div class="kpi-sub">${k.s}</div><div class="kpi-prog"><div class="kpi-prog-fill" style="width:${k.p}%;background:${k.c}"></div></div></div>`).join('');
+  const divs=[['Hospicare',data.hospicare],['Critical Care',data.criticalCare],['Medical Care',data.medicalCare],['Total',t,true]];
+  document.getElementById('dt2').innerHTML=`<thead><tr><th>Division</th><th class="r">Entries</th><th class="r">Won</th><th class="r">Win %</th><th class="r">Supplied</th><th class="r">Pending</th></tr></thead><tbody>${divs.map(([n,d,tot])=>`<tr class="${tot?'tot':''}"><td><strong>${n}</strong></td><td class="r">${d.total}</td><td class="r" style="color:var(--green);font-weight:600">${d.won}</td><td class="r"><div class="pw"><span>${pc(d.won,d.total)}%</span><div class="pb"><div class="pf" style="width:${pc(d.won,d.total)}%;background:var(--green)"></div></div></div></td><td class="r" style="color:var(--green);font-weight:600">${d.suppYes}</td><td class="r"><span class="badge ${d.suppNo>0?'r':'g'}">${d.suppNo}</span></td></tr>`).join('')}</tbody>`;
+  document.getElementById('pt').innerHTML=`<thead><tr><th>Division</th><th class="r">Contract value</th><th class="r">POs</th><th class="r">Paid</th></tr></thead><tbody>${divs.map(([n,d,tot])=>`<tr class="${tot?'tot':''}"><td><strong>${n}</strong></td><td class="r"><strong>${fp(d.cval)}</strong></td><td class="r">${d.po}</td><td class="r"><span class="badge ${d.paid>5?'g':d.paid>0?'a':'n'}">${d.paid}</span></td></tr>`).join('')}</tbody>`;
+  document.getElementById('fn').innerHTML=[
+    {l:'Bids submitted',v:t.total,p:100,c:'#2563eb'},
+    {l:'Contracts awarded',v:t.won,p:pc(t.won,t.total),c:'#16a34a'},
+    {l:'POs generated',v:t.po,p:pc(t.po,t.won),c:'#7c3aed'},
+    {l:'Supplies delivered',v:t.suppYes,p:pc(t.suppYes,t.po),c:'#0f766e'},
+    {l:'DTL cleared',v:t.dtl,p:pc(t.dtl,t.suppYes),c:'#0284c7'},
+    {l:'Payments received',v:t.paid,p:pc(t.paid,t.won),c:'#d97706'},
+  ].map(s=>`<div class="fs"><div class="fl">${s.l}</div><div class="fv" style="color:${s.c}">${s.v}</div><div class="fp">${s.p===100?'Baseline':s.p+'% of prev'}</div><div class="fb"><div class="ff" style="width:${s.p}%;background:${s.c}"></div></div></div>`).join('');
+  const alerts=[
+    {dot:'#dc2626',l:'Supply pending — awarded, not delivered',hc:data.hospicare.suppNo,cc:data.criticalCare.suppNo,mc:data.medicalCare.suppNo,b:'r',pr:'Critical'},
+    {dot:'#d97706',l:'Payment pending — recovery not confirmed',hc:Math.max(0,data.hospicare.won-data.hospicare.paid),cc:Math.max(0,data.criticalCare.won-data.criticalCare.paid),mc:Math.max(0,data.medicalCare.won-data.medicalCare.paid),b:'a',pr:'High'},
+    {dot:'#d97706',l:'PO issued — delivery not yet confirmed',hc:Math.max(0,data.hospicare.po-data.hospicare.suppYes),cc:Math.max(0,data.criticalCare.po-data.criticalCare.suppYes),mc:Math.max(0,data.medicalCare.po-data.medicalCare.suppYes),b:'a',pr:'High'},
+    {dot:'#2563eb',l:'Contract won — PO not yet generated',hc:Math.max(0,data.hospicare.won-data.hospicare.po),cc:Math.max(0,data.criticalCare.won-data.criticalCare.po),mc:Math.max(0,data.medicalCare.won-data.medicalCare.po),b:'b',pr:'Medium'},
+    {dot:'#94a3b8',l:'DTL / testing not yet completed',hc:Math.max(0,data.hospicare.po-data.hospicare.dtl),cc:Math.max(0,data.criticalCare.po-data.criticalCare.dtl),mc:Math.max(0,data.medicalCare.po-data.medicalCare.dtl),b:'n',pr:'Monitor'},
   ];
-  document.getElementById('kpi-grid').innerHTML = kpis.map(k => `
-    <div class="kpi-card">
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-val" style="color:${k.color}">${k.val}</div>
-      <div class="kpi-sub">${k.sub}</div>
-      <div class="kpi-prog"><div class="kpi-prog-fill" style="width:${k.pct}%;background:${k.color}"></div></div>
-    </div>`).join('');
-
-  // Division table
-  const divs = [
-    { name:'Hospicare',    d:data.hospicare    },
-    { name:'Critical Care',d:data.criticalCare },
-    { name:'Medical Care', d:data.medicalCare  },
-    { name:'Total',        d:t, isTotal:true   },
-  ];
-  document.getElementById('div-table').innerHTML = `
-    <thead><tr>
-      <th>Division</th><th class="r">Entries</th><th class="r">Won</th>
-      <th class="r">Win %</th><th class="r">Supplied</th><th class="r">Pending</th>
-    </tr></thead>
-    <tbody>${divs.map(({name,d,isTotal}) => `
-      <tr class="${isTotal?'total':''}">
-        <td><strong>${name}</strong></td>
-        <td class="r">${d.total}</td>
-        <td class="r" style="color:var(--green);font-weight:600">${d.won}</td>
-        <td class="r">
-          <div class="prog-wrap">
-            <span>${Math.round((d.won||0)/(d.total||1)*100)}%</span>
-            <div class="prog-bar"><div class="prog-fill" style="width:${Math.round((d.won||0)/(d.total||1)*100)}%;background:var(--green)"></div></div>
-          </div>
-        </td>
-        <td class="r" style="color:var(--green);font-weight:600">${d.suppYes}</td>
-        <td class="r"><span class="badge ${d.suppNo>0?'r':'g'}">${d.suppNo}</span></td>
-      </tr>`).join('')}
-    </tbody>`;
-
-  // Portfolio table
-  document.getElementById('port-table').innerHTML = `
-    <thead><tr>
-      <th>Division</th><th class="r">Contract value</th><th class="r">POs</th><th class="r">Paid</th>
-    </tr></thead>
-    <tbody>${divs.map(({name,d,isTotal}) => `
-      <tr class="${isTotal?'total':''}">
-        <td><strong>${name}</strong></td>
-        <td class="r"><strong>PKR ${fmtPKR(d.cval)}</strong></td>
-        <td class="r">${d.po}</td>
-        <td class="r"><span class="badge ${d.paid>5?'g':d.paid>0?'a':'n'}">${d.paid}</span></td>
-      </tr>`).join('')}
-    </tbody>`;
-
-  // Funnel
-  const stages = [
-    { label:'Bids submitted',    val:t.total,   pct:100, color:'#2563eb' },
-    { label:'Contracts awarded', val:t.won,     pct:Math.round(t.won/t.total*100), color:'#16a34a' },
-    { label:'POs generated',     val:t.po,      pct:Math.round(t.po/t.won*100), color:'#7c3aed' },
-    { label:'Supplies delivered',val:t.suppYes, pct:Math.round(t.suppYes/t.po*100), color:'#0f766e' },
-    { label:'DTL cleared',       val:t.dtl,     pct:Math.round(t.dtl/t.suppYes*100), color:'#0284c7' },
-    { label:'Payments received', val:t.paid,    pct:Math.round(t.paid/t.won*100), color:'#d97706' },
-  ];
-  document.getElementById('funnel').innerHTML = stages.map(s => `
-    <div class="funnel-stage">
-      <div class="f-label">${s.label}</div>
-      <div class="f-val" style="color:${s.color}">${s.val}</div>
-      <div class="f-pct">${s.pct === 100 ? 'Baseline' : s.pct + '% of prev'}</div>
-      <div class="f-bar"><div class="f-fill" style="width:${s.pct}%;background:${s.color}"></div></div>
-    </div>`).join('');
-
-  // Alert table
-  const poNotSupplied = { hc: t.po - t.suppYes, cc: 0, mc: 0 }; // simplified
-  const alerts = [
-    { dot:'#dc2626', cls:'', label:'Supply pending — awarded, not yet delivered',     hc:data.hospicare.suppNo,    cc:data.criticalCare.suppNo,    mc:data.medicalCare.suppNo,    badge:'r', priority:'Critical' },
-    { dot:'#d97706', cls:'', label:'Payment pending — supplies done, recovery unclear',hc:data.hospicare.won-data.hospicare.paid, cc:data.criticalCare.won-data.criticalCare.paid, mc:data.medicalCare.won-data.medicalCare.paid, badge:'a', priority:'High' },
-    { dot:'#d97706', cls:'', label:'PO issued — delivery not yet confirmed',            hc:Math.max(0,data.hospicare.po-data.hospicare.suppYes),    cc:Math.max(0,data.criticalCare.po-data.criticalCare.suppYes),    mc:Math.max(0,data.medicalCare.po-data.medicalCare.suppYes),    badge:'a', priority:'High' },
-    { dot:'#2563eb', cls:'', label:'Contract won — PO not yet generated',              hc:Math.max(0,data.hospicare.won-data.hospicare.po),    cc:Math.max(0,data.criticalCare.won-data.criticalCare.po),    mc:Math.max(0,data.medicalCare.won-data.medicalCare.po),    badge:'b', priority:'Medium' },
-    { dot:'#94a3b8', cls:'', label:'DTL / testing not yet completed',                  hc:Math.max(0,data.hospicare.po-data.hospicare.dtl),    cc:Math.max(0,data.criticalCare.po-data.criticalCare.dtl),    mc:Math.max(0,data.medicalCare.po-data.medicalCare.dtl),    badge:'n', priority:'Monitor' },
-  ];
-  document.getElementById('alert-table').innerHTML = `
-    <thead><tr style="background:var(--bg2)">
-      <th style="width:32px"></th><th>Alert description</th>
-      <th class="r">Hospicare</th><th class="r">Critical Care</th><th class="r">Medical Care</th>
-      <th class="r">Total</th><th>Priority</th>
-    </tr></thead>
-    <tbody>${alerts.map(a => `
-      <tr>
-        <td style="text-align:center"><div class="dot" style="background:${a.dot};margin:0 auto"></div></td>
-        <td>${a.label}</td>
-        <td class="r"><strong>${Math.max(0,a.hc)}</strong></td>
-        <td class="r"><strong>${Math.max(0,a.cc)}</strong></td>
-        <td class="r"><strong>${Math.max(0,a.mc)}</strong></td>
-        <td class="r"><span class="badge ${a.badge}">${Math.max(0,a.hc+a.cc+a.mc)}</span></td>
-        <td><span class="badge ${a.badge}">${a.priority}</span></td>
-      </tr>`).join('')}
-    </tbody>`;
-
-  document.getElementById('connect-panel').style.display = 'none';
-  document.getElementById('dashboard').style.display = 'block';
-  document.getElementById('source-label').textContent = 'Google Sheets (live) — 3 divisions';
+  document.getElementById('at2').innerHTML=`<thead><tr style="background:var(--bg2)"><th style="width:32px"></th><th>Alert</th><th class="r">Hospicare</th><th class="r">Critical Care</th><th class="r">Medical Care</th><th class="r">Total</th><th>Priority</th></tr></thead><tbody>${alerts.map(a=>`<tr><td style="text-align:center"><div class="dot" style="background:${a.dot};margin:0 auto"></div></td><td>${a.l}</td><td class="r"><strong>${Math.max(0,a.hc)}</strong></td><td class="r"><strong>${Math.max(0,a.cc)}</strong></td><td class="r"><strong>${Math.max(0,a.mc)}</strong></td><td class="r"><span class="badge ${a.b}">${Math.max(0,a.hc+a.cc+a.mc)}</span></td><td><span class="badge ${a.b}">${a.pr}</span></td></tr>`).join('')}</tbody>`;
+  document.getElementById('cp').style.display='none';
+  document.getElementById('db').style.display='block';
+  document.getElementById('edit-btn').style.display='inline-block';
 }
 
-// ─── DATA LOADING ─────────────────────────────────────────────────────────────
-async function fetchSheet(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return await res.text();
+async function fetchCSV(url){const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}
+
+function status(msg,ok){const el=document.getElementById('sb');el.textContent=msg;el.className='status-box '+(ok?'s-ok':'s-err');el.style.display='block'}
+
+async function connect(){
+  const hc=document.getElementById('u-hc').value.trim();
+  const cc=document.getElementById('u-cc').value.trim();
+  const mc=document.getElementById('u-mc').value.trim();
+  if(!hc||!cc||!mc){status('Please paste all 3 URLs before connecting.',false);return}
+  status('Connecting to all 3 sheets — please wait...',true);
+  try{
+    const[a,b,c]=await Promise.all([fetchCSV(hc),fetchCSV(cc),fetchCSV(mc)]);
+    localStorage.setItem('url_hc',hc);localStorage.setItem('url_cc',cc);localStorage.setItem('url_mc',mc);
+    lr=new Date();cd=300;
+    render({hospicare:parse(a),criticalCare:parse(b),medicalCare:parse(c)});
+    document.getElementById('sl').textContent='Google Sheets (live) — Hospicare · Critical Care · Medical Care';
+  }catch(e){status('Could not load one or more sheets. Check the URLs and try again.',false)}
 }
 
-async function loadData() {
-  const urls = CONFIG.sheets;
-  const allConfigured = urls.hospicare && urls.criticalCare && urls.medicalCare;
-  if (!allConfigured) return; // show connect panel
-
-  try {
-    const [hcCsv, ccCsv, mcCsv] = await Promise.all([
-      fetchSheet(urls.hospicare),
-      fetchSheet(urls.criticalCare),
-      fetchSheet(urls.medicalCare),
-    ]);
-    const data = {
-      hospicare:    parseSheet(hcCsv,  'Hospicare'),
-      criticalCare: parseSheet(ccCsv,  'Critical Care'),
-      medicalCare:  parseSheet(mcCsv,  'Medical Care'),
-    };
-    lastRefreshed = new Date();
-    renderDashboard(data);
-  } catch(e) {
-    console.error('Load failed:', e);
-    document.getElementById('status-live').textContent = '⚠ Load error — retrying...';
-    document.getElementById('status-live').style.color = '#d97706';
-  }
+async function load(){
+  const hc=localStorage.getItem('url_hc'),cc=localStorage.getItem('url_cc'),mc=localStorage.getItem('url_mc');
+  if(!hc||!cc||!mc)return;
+  try{
+    const[a,b,c]=await Promise.all([fetchCSV(hc),fetchCSV(cc),fetchCSV(mc)]);
+    lr=new Date();
+    render({hospicare:parse(a),criticalCare:parse(b),medicalCare:parse(c)});
+    document.getElementById('sl').textContent='Google Sheets (live) — Hospicare · Critical Care · Medical Care';
+  }catch(e){document.getElementById('ll').textContent='⚠ Refresh error';document.getElementById('ll').style.color='#d97706'}
 }
 
-function loadDemo() {
-  renderDashboard(DEMO);
-  document.getElementById('source-label').textContent = 'Demo data (from MSD_TPTS.xlsx)';
+function demo(){render(DEMO);document.getElementById('sl').textContent='Demo data (MSD_TPTS.xlsx snapshot)'}
+
+function showConnect(){
+  document.getElementById('u-hc').value=localStorage.getItem('url_hc')||'';
+  document.getElementById('u-cc').value=localStorage.getItem('url_cc')||'';
+  document.getElementById('u-mc').value=localStorage.getItem('url_mc')||'';
+  document.getElementById('cp').style.display='block';
+  document.getElementById('db').style.display='none';
 }
 
-function connectSheet() {
-  const url = document.getElementById('sheet-url').value.trim();
-  if (!url) { alert('Please paste a Google Sheets CSV URL'); return; }
-  // For simplicity, use the same URL for all 3 sheets in Option A
-  // Users would paste each sheet's URL separately in production
-  CONFIG.sheets.hospicare    = url;
-  CONFIG.sheets.criticalCare = url.replace('gid=0','gid=1'); // next tab
-  CONFIG.sheets.medicalCare  = url.replace('gid=0','gid=2');
-  localStorage.setItem('url_hc', CONFIG.sheets.hospicare);
-  localStorage.setItem('url_cc', CONFIG.sheets.criticalCare);
-  localStorage.setItem('url_mc', CONFIG.sheets.medicalCare);
-  loadData();
-}
-
-// Auto-load on start if URLs are already saved
-loadData();
-// Show demo immediately if no URLs configured
-setTimeout(() => {
-  if (document.getElementById('dashboard').style.display === 'none') {
-    // Still on connect panel — pre-fill with instructions
-  }
-}, 100);
+if(localStorage.getItem('url_hc')&&localStorage.getItem('url_cc')&&localStorage.getItem('url_mc'))load();
 </script>
 </body>
 </html>
