@@ -5,7 +5,7 @@
 <title>IBL Healthcare · MSD Tender Tracker</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
-:root{--navy:#0a1628;--navy2:#1b2a3b;--gold:#c8963c;--white:#ffffff;--bg:#f8f9fa;--bg2:#f1f3f5;--border:#e2e8f0;--text:#0f172a;--text2:#475569;--text3:#94a3b8;--green:#16a34a;--green-lt:#dcfce7;--red:#dc2626;--red-lt:#fee2e2;--amber:#d97706;--amber-lt:#fef3c7;--blue:#2563eb;--blue-lt:#dbeafe}
+:root{--navy:#0a1628;--navy2:#1b2a3b;--gold:#c8963c;--bg:#f8f9fa;--bg2:#f1f3f5;--border:#e2e8f0;--text:#0f172a;--text2:#475569;--text3:#94a3b8;--green:#16a34a;--green-lt:#dcfce7;--red:#dc2626;--red-lt:#fee2e2;--amber:#d97706;--amber-lt:#fef3c7;--blue:#2563eb;--blue-lt:#dbeafe}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:13px}
 .header{background:var(--navy);color:#fff;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.25)}
@@ -18,37 +18,23 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .refresh-pill{display:inline-flex;align-items:center;gap:6px;background:#1b2a3b;border-radius:20px;padding:4px 12px;font-size:11px;color:#9ba8b8;margin-top:4px}
 .pulse{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;flex-shrink:0}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.edit-btn{background:none;border:1px solid #2d4a6b;border-radius:5px;color:#9ba8b8;padding:3px 10px;font-size:10px;cursor:pointer;margin-left:6px}
-.edit-btn:hover{background:#243447;color:#fff}
 .alert-banner{background:#fff7ed;border-left:4px solid var(--amber);padding:10px 28px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .alert-icon{width:18px;height:18px;border-radius:50%;background:var(--amber);color:#fff;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .main{max-width:1400px;margin:0 auto;padding:24px 28px;display:flex;flex-direction:column;gap:24px}
 .section-hdr{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:14px}
-/* CONNECT */
-.connect-wrap{display:flex;justify-content:center}
-.connect-box{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:32px;width:100%;max-width:660px}
-.connect-title{font-size:18px;font-weight:700;color:var(--navy);text-align:center;margin-bottom:6px}
-.connect-sub{font-size:13px;color:var(--text2);text-align:center;line-height:1.6;margin-bottom:28px}
-.url-group{margin-bottom:18px}
-.url-label{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px}
-.div-pill{display:inline-block;padding:2px 9px;border-radius:4px;font-size:10px;font-weight:700;color:#fff}
-.pill-hc{background:#2563eb}.pill-cc{background:#7c3aed}.pill-mc{background:#0f766e}
-.url-input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:monospace;outline:none;background:var(--bg);transition:border .15s}
-.url-input:focus{border-color:var(--navy);background:var(--white)}
-.url-hint{font-size:11px;color:var(--text3);margin-top:4px;line-height:1.4}
-.btn-row{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
-.btn{padding:11px 20px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;flex:1;min-width:120px;transition:all .15s}
-.btn-primary{background:var(--navy);color:#fff}.btn-primary:hover{background:var(--navy2)}
-.btn-demo{background:var(--bg2);color:var(--text);border:1px solid var(--border)}.btn-demo:hover{background:var(--border)}
-.status-box{padding:10px 14px;border-radius:8px;font-size:12px;margin-top:14px;display:none}
-.s-ok{background:var(--green-lt);color:#166534;border:1px solid #bbf7d0}
-.s-err{background:var(--red-lt);color:#991b1b;border:1px solid #fecaca}
-.steps-hdr{font-size:11px;font-weight:600;color:var(--text3);margin:22px 0 10px;padding-top:18px;border-top:1px solid var(--border)}
-.step-row{display:flex;gap:10px;margin-bottom:9px;font-size:12px;color:var(--text2);line-height:1.5}
-.step-num{width:20px;height:20px;background:var(--navy);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
-/* DASHBOARD */
+/* LOADER */
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;gap:14px}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-size:13px;color:var(--text3)}
+/* ERROR */
+.error-card{background:#fff;border:1px solid #fecaca;border-radius:10px;padding:28px;text-align:center;max-width:480px;margin:40px auto}
+.error-card h3{color:#991b1b;margin-bottom:8px}
+.error-card p{color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:16px}
+.retry-btn{background:var(--navy);color:#fff;border:none;border-radius:7px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer}
+/* KPI */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-.kpi-card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:16px 18px}
+.kpi-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px 18px}
 .kpi-label{font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:500}
 .kpi-val{font-size:30px;font-weight:700;letter-spacing:-1.5px;line-height:1}
 .kpi-sub{font-size:11px;color:var(--text3);margin-top:6px}
@@ -56,7 +42,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:v
 .kpi-prog-fill{height:100%;border-radius:2px;transition:width 1s ease}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 @media(max-width:768px){.two-col{grid-template-columns:1fr}}
-.card{background:var(--white);border:1px solid var(--border);border-radius:8px;padding:20px}
+.card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px}
 table{width:100%;border-collapse:collapse}
 th{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
 th.r,td.r{text-align:right}
@@ -70,7 +56,7 @@ tr:hover:not(.tot) td{background:var(--bg)}
 .pw{display:inline-flex;align-items:center;gap:6px}
 .pb{width:70px;height:4px;background:var(--border);border-radius:2px}
 .pf{height:100%;border-radius:2px}
-.funnel{display:grid;grid-template-columns:repeat(6,1fr);background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.funnel{display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden}
 @media(max-width:700px){.funnel{grid-template-columns:repeat(3,1fr)}}
 .fs{padding:16px 12px;text-align:center;border-right:1px solid var(--border)}
 .fs:last-child{border-right:none}.fs:nth-child(odd){background:var(--bg2)}
@@ -82,187 +68,196 @@ tr:hover:not(.tot) td{background:var(--bg)}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 .footer{background:var(--navy);color:#6b7c93;font-size:11px;padding:8px 28px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
 .live{color:#22c55e;font-weight:600}
-@media(max-width:600px){.main{padding:16px}.header{padding:12px 16px}.header-clock{font-size:16px}.kpi-val{font-size:24px}.fv{font-size:20px}}
+@media(max-width:600px){.main{padding:16px}.header{padding:12px 16px}.kpi-val{font-size:24px}.fv{font-size:20px}.header-clock{font-size:16px}}
 </style>
 </head>
 <body>
+
 <header class="header">
   <div class="header-brand">
     <div class="brand-mark">IBL</div>
-    <div><div class="brand-name">IBL Healthcare · MSD Division</div><div class="brand-sub">Tender Progression Tracker — FY 2025–26</div></div>
+    <div>
+      <div class="brand-name">IBL Healthcare · MSD Division</div>
+      <div class="brand-sub">Tender Progression Tracker — FY 2025–26</div>
+    </div>
   </div>
   <div class="header-right">
-    <div><div class="header-clock" id="clk">--:--:--</div><div class="header-date" id="dt"></div></div>
+    <div>
+      <div class="header-clock" id="clk">--:--:--</div>
+      <div class="header-date" id="hdt"></div>
+    </div>
     <div>
       <div style="font-size:11px;color:#9ba8b8">Refreshed: <span id="ref">—</span></div>
       <div class="refresh-pill">
-        <div class="pulse"></div><span id="cd">5:00</span>
-        <button class="edit-btn" id="edit-btn" onclick="showConnect()" style="display:none">✎ Edit sheets</button>
+        <div class="pulse"></div>
+        <span id="cd">5:00</span>
       </div>
     </div>
   </div>
 </header>
-<div class="alert-banner" id="ab" style="display:none"><div class="alert-icon">!</div><span id="at"></span></div>
-<main class="main">
-  <div id="cp">
-    <div class="connect-wrap"><div class="connect-box">
-      <div class="connect-title">Connect your Google Sheets</div>
-      <div class="connect-sub">Paste one CSV URL per division below.<br>The dashboard reads all 3 live and auto-refreshes every 5 minutes.</div>
-      <div class="url-group">
-        <div class="url-label"><span class="div-pill pill-hc">HC</span> Hospicare — CSV URL</div>
-        <input class="url-input" id="u-hc" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=0&single=true&output=csv"/>
-        <div class="url-hint">In Google Sheets → File → Share → Publish to web → select <strong>Hospicare</strong> tab → CSV → Publish → copy URL</div>
-      </div>
-      <div class="url-group">
-        <div class="url-label"><span class="div-pill pill-cc">CC</span> Critical Care — CSV URL</div>
-        <input class="url-input" id="u-cc" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv"/>
-        <div class="url-hint">Same steps → select <strong>Critical Care</strong> tab → CSV → Publish → copy URL (different gid= number)</div>
-      </div>
-      <div class="url-group">
-        <div class="url-label"><span class="div-pill pill-mc">MC</span> Medical Care — CSV URL</div>
-        <input class="url-input" id="u-mc" placeholder="https://docs.google.com/spreadsheets/d/.../pub?gid=...&single=true&output=csv"/>
-        <div class="url-hint">Same steps → select <strong>Medical Care</strong> tab → CSV → Publish → copy URL (different gid= number)</div>
-      </div>
-      <div id="sb" class="status-box"></div>
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="connect()">Connect all 3 &amp; load dashboard</button>
-        <button class="btn btn-demo" onclick="demo()">Preview with sample data</button>
-      </div>
-      <div class="steps-hdr">How to get the CSV URL for each tab</div>
-      <div class="step-row"><div class="step-num">1</div><div>Open your Google Sheet → click <strong>File → Share → Publish to web</strong></div></div>
-      <div class="step-row"><div class="step-num">2</div><div>First dropdown → select the tab name e.g. <strong>Hospicare</strong></div></div>
-      <div class="step-row"><div class="step-num">3</div><div>Second dropdown → select <strong>Comma-separated values (.csv)</strong></div></div>
-      <div class="step-row"><div class="step-num">4</div><div>Click <strong>Publish</strong> → copy the URL that appears → paste above</div></div>
-      <div class="step-row"><div class="step-num">5</div><div>Repeat for <strong>Critical Care</strong> and <strong>Medical Care</strong> tabs — each gives a different URL</div></div>
-    </div></div>
+
+<div class="alert-banner" id="ab" style="display:none">
+  <div class="alert-icon">!</div>
+  <span id="at"></span>
+</div>
+
+<main class="main" id="main">
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <div class="loader-text">Loading live data from Google Sheets...</div>
   </div>
   <div id="db" style="display:none">
     <section><div class="section-hdr">Pipeline scorecard</div><div class="kpi-grid" id="kg"></div></section>
     <div class="two-col">
-      <div class="card"><div class="section-hdr">Division breakdown</div><table id="dt2"></table></div>
+      <div class="card"><div class="section-hdr">Division breakdown</div><table id="dt"></table></div>
       <div class="card"><div class="section-hdr">Contract portfolio (PKR)</div><table id="pt"></table></div>
     </div>
     <section><div class="section-hdr">Procurement milestone funnel</div><div class="funnel" id="fn"></div></section>
-    <section><div class="section-hdr">Open alerts — intervention required</div><div class="card" style="padding:0;overflow:hidden"><table id="at2"></table></div></section>
+    <section><div class="section-hdr">Open alerts — intervention required</div><div class="card" style="padding:0;overflow:hidden"><table id="alt"></table></div></section>
+  </div>
+  <div id="err" style="display:none">
+    <div class="error-card">
+      <h3>Could not load data</h3>
+      <p>There was a problem connecting to Google Sheets. Please check your internet connection and try again.</p>
+      <button class="retry-btn" onclick="load()">Retry now</button>
+    </div>
   </div>
 </main>
+
 <footer class="footer">
-  <span>Source: <span id="sl">—</span></span>
-  <span class="live" id="ll">● Live</span>
+  <span>Live data · Hospicare · Critical Care · Medical Care</span>
+  <span class="live" id="ll">● Loading...</span>
 </footer>
+
 <script>
+// ── HARDCODED URLS — works on every device, no setup needed ──────────────────
+const URLS = {
+  hc: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHBHG1Q98dm1wGXDq1Pf6INIsetSkzcb3c2LOb6_dw03BrxqmNQ7Glzb39BVlfMv1qxKale4Indkph/pub?gid=1785407068&single=true&output=csv',
+  cc: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHBHG1Q98dm1wGXDq1Pf6INIsetSkzcb3c2LOb6_dw03BrxqmNQ7Glzb39BVlfMv1qxKale4Indkph/pub?gid=1337144373&single=true&output=csv',
+  mc: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHBHG1Q98dm1wGXDq1Pf6INIsetSkzcb3c2LOb6_dw03BrxqmNQ7Glzb39BVlfMv1qxKale4Indkph/pub?gid=1154834754&single=true&output=csv'
+};
+
+// ── CLOCK ────────────────────────────────────────────────────────────────────
 const D=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-let cd=300,lr=new Date();
+let cds=300, lr=new Date();
+
 function ft(d){let h=d.getHours(),m=d.getMinutes(),s=d.getSeconds();const a=h>=12?'PM':'AM';h=h%12||12;return`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${a}`}
 function fd(d){return`${D[d.getDay()]}, ${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`}
 function fs(d){return`${String(d.getHours()%12||12).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${d.getHours()>=12?'PM':'AM'}`}
 function fp(n){if(!n||isNaN(n))return'—';if(n>=1e9)return'PKR '+(n/1e9).toFixed(2)+'B';if(n>=1e6)return'PKR '+(n/1e6).toFixed(1)+'M';return'PKR '+Math.round(n).toLocaleString()}
 function pc(a,b){return b?Math.round(a/b*100):0}
+
 function tick(){
   const now=new Date();
   document.getElementById('clk').textContent=ft(now);
-  document.getElementById('dt').textContent=fd(now);
+  document.getElementById('hdt').textContent=fd(now);
   document.getElementById('ref').textContent=fs(lr);
-  cd--;
-  if(cd<=0){cd=300;lr=new Date();load();}
-  const m=Math.floor(cd/60),s=cd%60;
+  cds--;
+  if(cds<=0){cds=300;lr=new Date();load();}
+  const m=Math.floor(cds/60),s=cds%60;
   document.getElementById('cd').textContent=`${m}:${String(s).padStart(2,'0')}`;
 }
-tick();setInterval(tick,1000);
+tick(); setInterval(tick,1000);
 
+// ── PARSE ────────────────────────────────────────────────────────────────────
 function parse(csv){
-  const r=Papa.parse(csv,{header:true,skipEmptyLines:true});
-  const rows=r.data;if(!rows.length)return null;
+  const rows=Papa.parse(csv,{header:true,skipEmptyLines:true}).data;
+  if(!rows.length)return{total:0,won:0,po:0,suppYes:0,suppNo:0,dtl:0,paid:0,cval:0};
   const h=Object.keys(rows[0]);
   function f(...kw){return h.find(x=>kw.every(k=>x.toLowerCase().includes(k.toLowerCase())))||null}
-  const aC=f('contract','award')||f('award'),sC=f('supplies','deliver')||f('supply','deliver');
-  const pC=f('po number')||f('po','number'),pyC=f('payment','received');
-  const dC=f('dtl')||f('test','opening'),cvC=f('contract','value')||f('contractvalue');
+  const aC=f('contract','award')||f('award');
+  const sC=f('supplies','deliver')||f('supply','deliver');
+  const pC=f('po number')||f('po','number');
+  const pyC=f('payment','received');
+  const dC=f('dtl')||f('test','opening');
+  const cvC=f('contract','value')||f('contractvalue');
   function cnt(c,v){return c?rows.filter(r=>(r[c]||'').trim().toLowerCase()===v.toLowerCase()).length:0}
   function nb(c){return c?rows.filter(r=>{const v=(r[c]||'').trim().toLowerCase();return v&&v!=='nan'&&v!=='none'}).length:0}
   function cs(){if(!cvC||!aC)return 0;return rows.reduce((s,r)=>{if((r[aC]||'').toLowerCase()==='yes'){const v=parseFloat((r[cvC]||'').replace(/,/g,''));if(!isNaN(v))s+=v;}return s;},0)}
   return{total:rows.length,won:cnt(aC,'yes'),po:nb(pC),suppYes:cnt(sC,'yes'),suppNo:cnt(sC,'no'),dtl:nb(dC),paid:nb(pyC),cval:cs()}
 }
 
-const DEMO={hospicare:{total:89,won:73,po:63,suppYes:30,suppNo:32,dtl:25,paid:9,cval:795440055},criticalCare:{total:40,won:26,po:25,suppYes:24,suppNo:3,dtl:20,paid:1,cval:1066912835},medicalCare:{total:78,won:68,po:59,suppYes:29,suppNo:20,dtl:8,paid:12,cval:250216346}};
-
+// ── RENDER ───────────────────────────────────────────────────────────────────
 function render(data){
-  const t={};['total','won','po','suppYes','suppNo','dtl','paid','cval'].forEach(k=>{t[k]=(data.hospicare[k]||0)+(data.criticalCare[k]||0)+(data.medicalCare[k]||0)});
-  if(t.suppNo>0){document.getElementById('ab').style.display='flex';document.getElementById('at').innerHTML=`<strong>${t.suppNo} supply orders pending</strong> — contract awarded, delivery not confirmed. &nbsp;|&nbsp; <strong>${t.paid}</strong> of ${t.won} contracts have confirmed payments.`}
+  const t={};
+  ['total','won','po','suppYes','suppNo','dtl','paid','cval'].forEach(k=>{
+    t[k]=(data.hc[k]||0)+(data.cc[k]||0)+(data.mc[k]||0);
+  });
+
+  // Alert banner
+  if(t.suppNo>0){
+    document.getElementById('ab').style.display='flex';
+    document.getElementById('at').innerHTML=`<strong>${t.suppNo} supply orders pending</strong> — contract awarded, delivery not confirmed. &nbsp;|&nbsp; <strong>${t.paid}</strong> of ${t.won} contracts have confirmed payments.`;
+  }
+
+  // KPIs
   document.getElementById('kg').innerHTML=[
-    {l:'Total entries',v:t.total,s:'All divisions',p:100,c:'#0a1628'},
-    {l:'Contracts won',v:t.won,s:pc(t.won,t.total)+'% win rate',p:pc(t.won,t.total),c:'#16a34a'},
-    {l:'POs generated',v:t.po,s:pc(t.po,t.won)+'% of contracts',p:pc(t.po,t.won),c:'#2563eb'},
-    {l:'Supplies done',v:t.suppYes,s:pc(t.suppYes,t.po)+'% of POs',p:pc(t.suppYes,t.po),c:'#16a34a'},
-    {l:'Supply pending',v:t.suppNo,s:'Critical — action needed',p:pc(t.suppNo,t.po),c:'#dc2626'},
-    {l:'Payments cleared',v:t.paid,s:pc(t.paid,t.won)+'% recovery',p:pc(t.paid,t.won),c:'#d97706'},
+    {l:'Total entries',   v:t.total,   s:'All divisions',             p:100,               c:'#0a1628'},
+    {l:'Contracts won',   v:t.won,     s:pc(t.won,t.total)+'% win rate', p:pc(t.won,t.total), c:'#16a34a'},
+    {l:'POs generated',   v:t.po,      s:pc(t.po,t.won)+'% of contracts',p:pc(t.po,t.won),    c:'#2563eb'},
+    {l:'Supplies done',   v:t.suppYes, s:pc(t.suppYes,t.po)+'% of POs',  p:pc(t.suppYes,t.po),c:'#16a34a'},
+    {l:'Supply pending',  v:t.suppNo,  s:'Critical — action needed',    p:pc(t.suppNo,t.po), c:'#dc2626'},
+    {l:'Payments cleared',v:t.paid,    s:pc(t.paid,t.won)+'% recovery',  p:pc(t.paid,t.won),  c:'#d97706'},
   ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.l}</div><div class="kpi-val" style="color:${k.c}">${k.v}</div><div class="kpi-sub">${k.s}</div><div class="kpi-prog"><div class="kpi-prog-fill" style="width:${k.p}%;background:${k.c}"></div></div></div>`).join('');
-  const divs=[['Hospicare',data.hospicare],['Critical Care',data.criticalCare],['Medical Care',data.medicalCare],['Total',t,true]];
-  document.getElementById('dt2').innerHTML=`<thead><tr><th>Division</th><th class="r">Entries</th><th class="r">Won</th><th class="r">Win %</th><th class="r">Supplied</th><th class="r">Pending</th></tr></thead><tbody>${divs.map(([n,d,tot])=>`<tr class="${tot?'tot':''}"><td><strong>${n}</strong></td><td class="r">${d.total}</td><td class="r" style="color:var(--green);font-weight:600">${d.won}</td><td class="r"><div class="pw"><span>${pc(d.won,d.total)}%</span><div class="pb"><div class="pf" style="width:${pc(d.won,d.total)}%;background:var(--green)"></div></div></div></td><td class="r" style="color:var(--green);font-weight:600">${d.suppYes}</td><td class="r"><span class="badge ${d.suppNo>0?'r':'g'}">${d.suppNo}</span></td></tr>`).join('')}</tbody>`;
-  document.getElementById('pt').innerHTML=`<thead><tr><th>Division</th><th class="r">Contract value</th><th class="r">POs</th><th class="r">Paid</th></tr></thead><tbody>${divs.map(([n,d,tot])=>`<tr class="${tot?'tot':''}"><td><strong>${n}</strong></td><td class="r"><strong>${fp(d.cval)}</strong></td><td class="r">${d.po}</td><td class="r"><span class="badge ${d.paid>5?'g':d.paid>0?'a':'n'}">${d.paid}</span></td></tr>`).join('')}</tbody>`;
+
+  // Division table
+  const divs=[['Hospicare',data.hc],['Critical Care',data.cc],['Medical Care',data.mc],['Total',t,true]];
+  document.getElementById('dt').innerHTML=`<thead><tr><th>Division</th><th class="r">Entries</th><th class="r">Won</th><th class="r">Win %</th><th class="r">Supplied</th><th class="r">Pending</th></tr></thead><tbody>${
+    divs.map(([n,d,tot])=>`<tr class="${tot?'tot':''}"><td><strong>${n}</strong></td><td class="r">${d.total}</td><td class="r" style="color:var(--green);font-weight:600">${d.won}</td><td class="r"><div class="pw"><span>${pc(d.won,d.total)}%</span><div class="pb"><div class="pf" style="width:${pc(d.won,d.total)}%;background:var(--green)"></div></div></div></td><td class="r" style="color:var(--green);font-weight:600">${d.suppYes}</td><td class="r"><span class="badge ${d.suppNo>0?'r':'g'}">${d.suppNo}</span></td></tr>`).join('')
+  }</tbody>`;
+
+  // Portfolio table
+  document.getElementById('pt').innerHTML=`<thead><tr><th>Division</th><th class="r">Contract value</th><th class="r">POs</th><th class="r">Paid</th></tr></thead><tbody>${
+    divs.map(([n,d,tot])=>`<tr class="${tot?'tot':''}"><td><strong>${n}</strong></td><td class="r"><strong>${fp(d.cval)}</strong></td><td class="r">${d.po}</td><td class="r"><span class="badge ${d.paid>5?'g':d.paid>0?'a':'n'}">${d.paid}</span></td></tr>`).join('')
+  }</tbody>`;
+
+  // Funnel
   document.getElementById('fn').innerHTML=[
-    {l:'Bids submitted',v:t.total,p:100,c:'#2563eb'},
-    {l:'Contracts awarded',v:t.won,p:pc(t.won,t.total),c:'#16a34a'},
-    {l:'POs generated',v:t.po,p:pc(t.po,t.won),c:'#7c3aed'},
-    {l:'Supplies delivered',v:t.suppYes,p:pc(t.suppYes,t.po),c:'#0f766e'},
-    {l:'DTL cleared',v:t.dtl,p:pc(t.dtl,t.suppYes),c:'#0284c7'},
-    {l:'Payments received',v:t.paid,p:pc(t.paid,t.won),c:'#d97706'},
+    {l:'Bids submitted',    v:t.total,   p:100,                    c:'#2563eb'},
+    {l:'Contracts awarded', v:t.won,     p:pc(t.won,t.total),      c:'#16a34a'},
+    {l:'POs generated',     v:t.po,      p:pc(t.po,t.won),         c:'#7c3aed'},
+    {l:'Supplies delivered',v:t.suppYes, p:pc(t.suppYes,t.po),     c:'#0f766e'},
+    {l:'DTL cleared',       v:t.dtl,     p:pc(t.dtl,t.suppYes),    c:'#0284c7'},
+    {l:'Payments received', v:t.paid,    p:pc(t.paid,t.won),       c:'#d97706'},
   ].map(s=>`<div class="fs"><div class="fl">${s.l}</div><div class="fv" style="color:${s.c}">${s.v}</div><div class="fp">${s.p===100?'Baseline':s.p+'% of prev'}</div><div class="fb"><div class="ff" style="width:${s.p}%;background:${s.c}"></div></div></div>`).join('');
-  const alerts=[
-    {dot:'#dc2626',l:'Supply pending — awarded, not delivered',hc:data.hospicare.suppNo,cc:data.criticalCare.suppNo,mc:data.medicalCare.suppNo,b:'r',pr:'Critical'},
-    {dot:'#d97706',l:'Payment pending — recovery not confirmed',hc:Math.max(0,data.hospicare.won-data.hospicare.paid),cc:Math.max(0,data.criticalCare.won-data.criticalCare.paid),mc:Math.max(0,data.medicalCare.won-data.medicalCare.paid),b:'a',pr:'High'},
-    {dot:'#d97706',l:'PO issued — delivery not yet confirmed',hc:Math.max(0,data.hospicare.po-data.hospicare.suppYes),cc:Math.max(0,data.criticalCare.po-data.criticalCare.suppYes),mc:Math.max(0,data.medicalCare.po-data.medicalCare.suppYes),b:'a',pr:'High'},
-    {dot:'#2563eb',l:'Contract won — PO not yet generated',hc:Math.max(0,data.hospicare.won-data.hospicare.po),cc:Math.max(0,data.criticalCare.won-data.criticalCare.po),mc:Math.max(0,data.medicalCare.won-data.medicalCare.po),b:'b',pr:'Medium'},
-    {dot:'#94a3b8',l:'DTL / testing not yet completed',hc:Math.max(0,data.hospicare.po-data.hospicare.dtl),cc:Math.max(0,data.criticalCare.po-data.criticalCare.dtl),mc:Math.max(0,data.medicalCare.po-data.medicalCare.dtl),b:'n',pr:'Monitor'},
-  ];
-  document.getElementById('at2').innerHTML=`<thead><tr style="background:var(--bg2)"><th style="width:32px"></th><th>Alert</th><th class="r">Hospicare</th><th class="r">Critical Care</th><th class="r">Medical Care</th><th class="r">Total</th><th>Priority</th></tr></thead><tbody>${alerts.map(a=>`<tr><td style="text-align:center"><div class="dot" style="background:${a.dot};margin:0 auto"></div></td><td>${a.l}</td><td class="r"><strong>${Math.max(0,a.hc)}</strong></td><td class="r"><strong>${Math.max(0,a.cc)}</strong></td><td class="r"><strong>${Math.max(0,a.mc)}</strong></td><td class="r"><span class="badge ${a.b}">${Math.max(0,a.hc+a.cc+a.mc)}</span></td><td><span class="badge ${a.b}">${a.pr}</span></td></tr>`).join('')}</tbody>`;
-  document.getElementById('cp').style.display='none';
+
+  // Alerts
+  document.getElementById('alt').innerHTML=`<thead><tr style="background:var(--bg2)"><th style="width:32px"></th><th>Alert</th><th class="r">Hospicare</th><th class="r">Critical Care</th><th class="r">Medical Care</th><th class="r">Total</th><th>Priority</th></tr></thead><tbody>${[
+    {dot:'#dc2626',l:'Supply pending — awarded, not delivered',      hc:data.hc.suppNo, cc:data.cc.suppNo, mc:data.mc.suppNo, b:'r',pr:'Critical'},
+    {dot:'#d97706',l:'Payment pending — recovery not confirmed',     hc:Math.max(0,data.hc.won-data.hc.paid), cc:Math.max(0,data.cc.won-data.cc.paid), mc:Math.max(0,data.mc.won-data.mc.paid), b:'a',pr:'High'},
+    {dot:'#d97706',l:'PO issued — delivery not yet confirmed',       hc:Math.max(0,data.hc.po-data.hc.suppYes), cc:Math.max(0,data.cc.po-data.cc.suppYes), mc:Math.max(0,data.mc.po-data.mc.suppYes), b:'a',pr:'High'},
+    {dot:'#2563eb',l:'Contract won — PO not yet generated',          hc:Math.max(0,data.hc.won-data.hc.po), cc:Math.max(0,data.cc.won-data.cc.po), mc:Math.max(0,data.mc.won-data.mc.po), b:'b',pr:'Medium'},
+    {dot:'#94a3b8',l:'DTL / testing not yet completed',              hc:Math.max(0,data.hc.po-data.hc.dtl), cc:Math.max(0,data.cc.po-data.cc.dtl), mc:Math.max(0,data.mc.po-data.mc.dtl), b:'n',pr:'Monitor'},
+  ].map(a=>`<tr><td style="text-align:center"><div class="dot" style="background:${a.dot};margin:0 auto"></div></td><td>${a.l}</td><td class="r"><strong>${Math.max(0,a.hc)}</strong></td><td class="r"><strong>${Math.max(0,a.cc)}</strong></td><td class="r"><strong>${Math.max(0,a.mc)}</strong></td><td class="r"><span class="badge ${a.b}">${Math.max(0,a.hc+a.cc+a.mc)}</span></td><td><span class="badge ${a.b}">${a.pr}</span></td></tr>`).join('')}</tbody>`;
+
+  // Show dashboard
+  document.getElementById('loader').style.display='none';
+  document.getElementById('err').style.display='none';
   document.getElementById('db').style.display='block';
-  document.getElementById('edit-btn').style.display='inline-block';
+  document.getElementById('ll').textContent='● Live — auto-refreshes every 5 min';
 }
 
-async function fetchCSV(url){const r=await fetch(url);if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}
-
-function status(msg,ok){const el=document.getElementById('sb');el.textContent=msg;el.className='status-box '+(ok?'s-ok':'s-err');el.style.display='block'}
-
-async function connect(){
-  const hc=document.getElementById('u-hc').value.trim();
-  const cc=document.getElementById('u-cc').value.trim();
-  const mc=document.getElementById('u-mc').value.trim();
-  if(!hc||!cc||!mc){status('Please paste all 3 URLs before connecting.',false);return}
-  status('Connecting to all 3 sheets — please wait...',true);
-  try{
-    const[a,b,c]=await Promise.all([fetchCSV(hc),fetchCSV(cc),fetchCSV(mc)]);
-    localStorage.setItem('url_hc',hc);localStorage.setItem('url_cc',cc);localStorage.setItem('url_mc',mc);
-    lr=new Date();cd=300;
-    render({hospicare:parse(a),criticalCare:parse(b),medicalCare:parse(c)});
-    document.getElementById('sl').textContent='Google Sheets (live) — Hospicare · Critical Care · Medical Care';
-  }catch(e){status('Could not load one or more sheets. Check the URLs and try again.',false)}
-}
-
+// ── LOAD ─────────────────────────────────────────────────────────────────────
 async function load(){
-  const hc=localStorage.getItem('url_hc'),cc=localStorage.getItem('url_cc'),mc=localStorage.getItem('url_mc');
-  if(!hc||!cc||!mc)return;
   try{
-    const[a,b,c]=await Promise.all([fetchCSV(hc),fetchCSV(cc),fetchCSV(mc)]);
-    lr=new Date();
-    render({hospicare:parse(a),criticalCare:parse(b),medicalCare:parse(c)});
-    document.getElementById('sl').textContent='Google Sheets (live) — Hospicare · Critical Care · Medical Care';
-  }catch(e){document.getElementById('ll').textContent='⚠ Refresh error';document.getElementById('ll').style.color='#d97706'}
+    document.getElementById('ll').textContent='● Refreshing...';
+    const[hcCsv,ccCsv,mcCsv]=await Promise.all([
+      fetch(URLS.hc).then(r=>r.text()),
+      fetch(URLS.cc).then(r=>r.text()),
+      fetch(URLS.mc).then(r=>r.text()),
+    ]);
+    lr=new Date(); cds=300;
+    render({hc:parse(hcCsv), cc:parse(ccCsv), mc:parse(mcCsv)});
+  }catch(e){
+    document.getElementById('loader').style.display='none';
+    document.getElementById('err').style.display='block';
+    document.getElementById('ll').textContent='⚠ Load error — retrying in 5 min';
+    document.getElementById('ll').style.color='#d97706';
+  }
 }
 
-function demo(){render(DEMO);document.getElementById('sl').textContent='Demo data (MSD_TPTS.xlsx snapshot)'}
-
-function showConnect(){
-  document.getElementById('u-hc').value=localStorage.getItem('url_hc')||'';
-  document.getElementById('u-cc').value=localStorage.getItem('url_cc')||'';
-  document.getElementById('u-mc').value=localStorage.getItem('url_mc')||'';
-  document.getElementById('cp').style.display='block';
-  document.getElementById('db').style.display='none';
-}
-
-if(localStorage.getItem('url_hc')&&localStorage.getItem('url_cc')&&localStorage.getItem('url_mc'))load();
+load(); // Load immediately on page open
 </script>
 </body>
 </html>
