@@ -1,263 +1,814 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>IBL Healthcare · MSD Tender Tracker</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>IBL Healthcare · MSD Command Centre</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-:root{--navy:#0a1628;--navy2:#1b2a3b;--gold:#c8963c;--bg:#f8f9fa;--bg2:#f1f3f5;--border:#e2e8f0;--text:#0f172a;--text2:#475569;--text3:#94a3b8;--green:#16a34a;--green-lt:#dcfce7;--red:#dc2626;--red-lt:#fee2e2;--amber:#d97706;--amber-lt:#fef3c7;--blue:#2563eb;--blue-lt:#dbeafe}
+:root{
+  --nb:#0f2d52;--nb2:#1a3f6f;--nb3:#1e4d8c;
+  --lb:#e8f0fb;--lb2:#dbeafe;--lb3:#bfdbfe;
+  --gold:#c8963c;--white:#ffffff;
+  --bg:#f0f5fb;--bg2:#e8f0fb;--bg3:#f8faff;
+  --border:#c5d8f0;--border2:#93b8e0;
+  --text:#0f172a;--text2:#334155;--text3:#64748b;
+  --green:#15803d;--green-lt:#dcfce7;
+  --red:#b91c1c;--red-lt:#fee2e2;
+  --amber:#b45309;--amber-lt:#fef3c7;
+  --blue:#1d4ed8;--blue-lt:#dbeafe;
+  --teal:#0f766e;--teal-lt:#ccfbf1;
+}
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100vh}
 body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:13px}
-.header{background:var(--navy);color:#fff;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.25)}
-.header-brand{display:flex;align-items:center;gap:12px}
-.brand-mark{width:38px;height:38px;background:var(--gold);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
-.brand-name{font-size:15px;font-weight:600}.brand-sub{font-size:11px;color:#9ba8b8;margin-top:2px}
-.header-right{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
-.header-clock{font-size:20px;font-weight:600;letter-spacing:1px;font-variant-numeric:tabular-nums}
-.header-date{font-size:11px;color:#6b7c93;margin-top:2px}
-.refresh-pill{display:inline-flex;align-items:center;gap:6px;background:#1b2a3b;border-radius:20px;padding:4px 12px;font-size:11px;color:#9ba8b8;margin-top:4px}
-.pulse{width:6px;height:6px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite;flex-shrink:0}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.alert-banner{background:#fff7ed;border-left:4px solid var(--amber);padding:10px 28px;font-size:12px;color:#92400e;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.alert-icon{width:18px;height:18px;border-radius:50%;background:var(--amber);color:#fff;font-weight:700;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.main{max-width:1400px;margin:0 auto;padding:24px 28px;display:flex;flex-direction:column;gap:24px}
-.section-hdr{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:14px}
-/* LOADER */
-.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 20px;gap:14px}
-.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin 1s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.loader-text{font-size:13px;color:var(--text3)}
-/* ERROR */
-.error-card{background:#fff;border:1px solid #fecaca;border-radius:10px;padding:28px;text-align:center;max-width:480px;margin:40px auto}
-.error-card h3{color:#991b1b;margin-bottom:8px}
-.error-card p{color:var(--text2);font-size:13px;line-height:1.6;margin-bottom:16px}
-.retry-btn{background:var(--navy);color:#fff;border:none;border-radius:7px;padding:10px 24px;font-size:13px;font-weight:600;cursor:pointer}
-/* KPI */
-.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-.kpi-card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:16px 18px}
-.kpi-label{font-size:11px;color:var(--text2);margin-bottom:8px;font-weight:500}
-.kpi-val{font-size:30px;font-weight:700;letter-spacing:-1.5px;line-height:1}
-.kpi-sub{font-size:11px;color:var(--text3);margin-top:6px}
-.kpi-prog{height:3px;background:var(--border);border-radius:2px;margin-top:10px}
-.kpi-prog-fill{height:100%;border-radius:2px;transition:width 1s ease}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:768px){.two-col{grid-template-columns:1fr}}
-.card{background:#fff;border:1px solid var(--border);border-radius:8px;padding:20px}
+.outer{max-width:1440px;margin:0 auto;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 2px 16px rgba(15,45,82,.10);margin-top:8px;margin-bottom:24px}
+
+/* HEADER */
+.hdr{background:var(--nb);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.hdr-left{display:flex;align-items:center;gap:12px}
+.logo{width:40px;height:40px;background:var(--gold);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;color:#fff;letter-spacing:.5px;flex-shrink:0}
+.hdr-title{font-size:15px;font-weight:500;color:#fff}
+.hdr-sub{font-size:11px;color:#8fafd4;margin-top:2px}
+.hdr-right{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.live-clock{font-size:20px;font-weight:500;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.hdr-date{font-size:10px;color:#8fafd4;margin-top:2px}
+.refresh-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:3px 10px;font-size:10px;color:#8fafd4;margin-top:3px}
+.pulse{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulse 2s infinite;flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* SUB HEADER */
+.sub-hdr{background:var(--nb2);padding:8px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px}
+.breadcrumb{font-size:11px;color:#8fafd4;display:flex;align-items:center;gap:6px}
+.stat-pills{display:flex;gap:6px;flex-wrap:wrap}
+.stat-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:3px 10px;font-size:10px;color:#c5d8f0}
+.stat-pill strong{color:#fff}
+
+/* ALERT */
+.alert-strip{background:#fffbeb;border-left:4px solid var(--amber);padding:8px 24px;font-size:11px;color:var(--amber);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.alert-icon{width:16px;height:16px;border-radius:50%;background:var(--amber);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* TABS */
+.tabs-bar{background:var(--white);border-bottom:1px solid var(--border);display:flex;overflow-x:auto;gap:0}
+.tab-btn{padding:11px 18px;font-size:12px;font-weight:500;color:var(--text3);border:none;background:transparent;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.tab-btn:hover{color:var(--nb);background:var(--lb)}
+.tab-btn.active{color:var(--nb);border-bottom-color:var(--nb);font-weight:600}
+
+.panel{padding:20px 24px;display:none;background:var(--bg)}
+.panel.active{display:block}
+
+/* SEARCH */
+.search-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:7px;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:8px 13px;flex:1;min-width:200px}
+.search-box input{border:none;outline:none;font-size:12px;background:transparent;color:var(--text);width:100%}
+.search-box input::placeholder{color:var(--text3)}
+.div-filter{display:flex;gap:4px;flex-wrap:wrap}
+.div-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:500;cursor:pointer;background:var(--white);color:var(--text2);transition:all .15s}
+.div-btn:hover{border-color:var(--nb3);color:var(--nb3)}
+.div-btn.active{background:var(--nb);color:#fff;border-color:var(--nb)}
+
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:14px 16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:10px 10px 0 0}
+.kpi-navy::before{background:var(--nb)}.kpi-blue::before{background:var(--blue)}
+.kpi-green::before{background:var(--green)}.kpi-red::before{background:var(--red)}
+.kpi-amber::before{background:var(--amber)}.kpi-teal::before{background:var(--teal)}
+.kpi-l{font-size:10px;color:var(--text3);margin-bottom:7px;font-weight:500;letter-spacing:.2px}
+.kpi-v{font-size:26px;font-weight:500;letter-spacing:-1px;line-height:1}
+.kpi-s{font-size:10px;color:var(--text3);margin-top:5px}
+.kpi-bar{height:3px;background:var(--lb);border-radius:2px;margin-top:9px}
+.kpi-bar-fill{height:100%;border-radius:2px}
+
+/* SECTION */
+.section-hdr{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:7px;margin-bottom:13px;display:flex;align-items:center;gap:6px}
+.section-dot{width:6px;height:6px;border-radius:50%;background:var(--nb3);flex-shrink:0}
+
+/* CARD */
+.card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:16px}
+
+/* CAROUSEL */
+.carousel-wrap{position:relative;border-radius:10px;border:1px solid var(--border);overflow:hidden;margin-bottom:16px;background:var(--white)}
+.cprog-bar{height:3px;background:var(--lb)}
+.cprog-fill{height:100%;background:var(--nb3);transition:width 5s linear;width:0%}
+.carousel-track{display:flex;transition:transform .55s cubic-bezier(.4,0,.2,1)}
+.carousel-slide{min-width:100%;padding:22px 26px}
+.slide-eyebrow{font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.slide-eyebrow-line{flex:1;height:1px;background:var(--border)}
+.slide-big{font-size:52px;font-weight:500;letter-spacing:-3px;line-height:1;margin-bottom:5px}
+.slide-sub{font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:14px}
+.slide-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.slide-item{background:var(--lb);border:1px solid var(--lb3);border-radius:8px;padding:11px 14px}
+.slide-item-l{font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:500}
+.slide-item-v{font-size:22px;font-weight:500;letter-spacing:-.5px;line-height:1}
+.slide-item-s{font-size:10px;color:var(--text3);margin-top:3px;line-height:1.4}
+.carousel-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 24px 13px;background:var(--bg3);border-top:1px solid var(--border)}
+.cdots{display:flex;gap:5px}
+.cdot{width:20px;height:3px;border-radius:2px;background:var(--border2);cursor:pointer;transition:all .25s}
+.cdot.active{background:var(--nb);width:30px}
+.car-btns{display:flex;gap:6px}
+.car-btn{width:27px;height:27px;border-radius:50%;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:13px;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.car-btn:hover{background:var(--nb);color:#fff;border-color:var(--nb)}
+.car-prog-txt{font-size:10px;color:var(--text3)}
+
+/* LAYOUT */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.three-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.four-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+
+/* TABLE */
 table{width:100%;border-collapse:collapse}
-th{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+th{font-size:10px;font-weight:600;color:var(--text3);text-align:left;padding:8px 11px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg3);letter-spacing:.3px}
 th.r,td.r{text-align:right}
-td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+td{padding:8px 11px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle;font-size:12px}
 tr:last-child td{border-bottom:none}
-tr.tot td{background:var(--bg2);font-weight:700;border-top:1px solid var(--border)}
-tr:hover:not(.tot) td{background:var(--bg)}
-.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
-.g{background:var(--green-lt);color:#166534}.r{background:var(--red-lt);color:#991b1b}
-.a{background:var(--amber-lt);color:#92400e}.b{background:var(--blue-lt);color:#1e40af}.n{background:var(--bg2);color:var(--text2)}
-.pw{display:inline-flex;align-items:center;gap:6px}
-.pb{width:70px;height:4px;background:var(--border);border-radius:2px}
-.pf{height:100%;border-radius:2px}
-.funnel{display:grid;grid-template-columns:repeat(6,1fr);background:#fff;border:1px solid var(--border);border-radius:8px;overflow:hidden}
-@media(max-width:700px){.funnel{grid-template-columns:repeat(3,1fr)}}
-.fs{padding:16px 12px;text-align:center;border-right:1px solid var(--border)}
-.fs:last-child{border-right:none}.fs:nth-child(odd){background:var(--bg2)}
-.fl{font-size:10px;color:var(--text2);line-height:1.4;margin-bottom:8px}
-.fv{font-size:28px;font-weight:700;letter-spacing:-1px;line-height:1}
-.fp{font-size:10px;color:var(--text3);margin-top:5px}
-.fb{height:3px;background:var(--border);border-radius:2px;margin-top:10px}
-.ff{height:100%;border-radius:2px}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.footer{background:var(--navy);color:#6b7c93;font-size:11px;padding:8px 28px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
-.live{color:#22c55e;font-weight:600}
-@media(max-width:600px){.main{padding:16px}.header{padding:12px 16px}.kpi-val{font-size:24px}.fv{font-size:20px}.header-clock{font-size:16px}}
+tr:hover td{background:var(--lb)}
+.tbl-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;overflow-x:auto}
+tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:1px solid var(--border2)}
+
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500}
+.bg{background:var(--green-lt);color:#166534}.br{background:var(--red-lt);color:#991b1b}
+.ba{background:var(--amber-lt);color:#92400e}.bb{background:var(--blue-lt);color:#1e40af}
+.bt{background:var(--teal-lt);color:var(--teal)}.bn{background:var(--lb);color:var(--text3);border:1px solid var(--border)}
+.bdiv-cc{background:#dbeafe;color:#1e40af}.bdiv-hc{background:#fef3c7;color:#92400e}.bdiv-mc{background:var(--teal-lt);color:var(--teal)}
+
+/* STATUS DOTS */
+.dot-g,.dot-r,.dot-a{width:7px;height:7px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:3px;flex-shrink:0}
+.dot-g{background:var(--green)}.dot-r{background:var(--red)}.dot-a{background:var(--amber)}
+
+/* CHARTS */
+.legend-row{display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--text2);margin-bottom:10px}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-sq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.chart-wrap{position:relative;width:100%}
+
+/* PROGRESS */
+.prog-row{display:flex;align-items:center;gap:8px;margin-top:5px}
+.prog-bar-wrap{flex:1;height:5px;background:var(--lb);border-radius:3px}
+.prog-bar-fill{height:100%;border-radius:3px}
+.prog-val{font-size:11px;font-weight:500;min-width:36px;text-align:right}
+
+/* LOADER */
+.loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:14px}
+.spinner{width:36px;height:36px;border:3px solid var(--lb);border-top-color:var(--nb);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-size:12px;color:var(--text3)}
+
+.no-results{text-align:center;padding:32px;font-size:12px;color:var(--text3)}
+
+/* FOOTER */
+.footer-bar{background:var(--nb);color:#5a80a8;font-size:10px;padding:8px 24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+.live-txt{color:#4ade80;font-weight:500}
+
+@media(max-width:600px){
+  .outer{margin:4px;border-radius:8px}
+  .hdr,.sub-hdr,.panel,.footer-bar{padding-left:14px;padding-right:14px}
+  .tabs-bar{padding:0 4px}
+  .tab-btn{padding:9px 12px;font-size:11px}
+  .slide-big{font-size:36px}
+  .slide-grid{grid-template-columns:1fr}
+  .two-col,.three-kpi,.four-kpi{grid-template-columns:1fr}
+  .kpi-v{font-size:22px}
+}
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-brand">
-    <div class="brand-mark">IBL</div>
+<div class="outer">
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-left">
+    <div class="logo">IBL</div>
     <div>
-      <div class="brand-name">IBL Healthcare · MSD Division</div>
-      <div class="brand-sub">Tender Progression Tracker — FY 2025–26</div>
+      <div class="hdr-title">IBL Healthcare · MSD Division</div>
+      <div class="hdr-sub">Executive Command Centre — FY 2025–26</div>
     </div>
   </div>
-  <div class="header-right">
+  <div class="hdr-right">
     <div>
-      <div class="header-clock" id="clk">--:--:--</div>
-      <div class="header-date" id="hdt"></div>
+      <div class="live-clock" id="clk">--:--:--</div>
+      <div class="hdr-date" id="hdt"></div>
     </div>
-    <div>
-      <div style="font-size:11px;color:#9ba8b8">Refreshed: <span id="ref">—</span></div>
-      <div class="refresh-pill">
-        <div class="pulse"></div>
-        <span id="cd">5:00</span>
-      </div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:#8fafd4">Refreshed: <span id="ref">—</span></div>
+      <div class="refresh-pill"><div class="pulse"></div><span id="cd">5:00</span></div>
     </div>
   </div>
 </header>
 
-<div class="alert-banner" id="ab" style="display:none">
-  <div class="alert-icon">!</div>
-  <span id="at"></span>
+<!-- SUB HEADER -->
+<div class="sub-hdr">
+  <div class="breadcrumb">
+    <span>MSD Division</span><span>›</span>
+    <span style="color:#c5d8f0">Hospicare · Critical Care · Medical Care</span>
+  </div>
+  <div class="stat-pills">
+    <div class="stat-pill">Sales <strong id="ph-sales">PKR 2.03B</strong></div>
+    <div class="stat-pill">Won <strong id="ph-won">162/232</strong></div>
+    <div class="stat-pill">Outstanding <strong>PKR 994M</strong></div>
+    <div class="stat-pill">Alerts <strong id="ph-alerts">54 pending</strong></div>
+  </div>
 </div>
 
-<main class="main" id="main">
-  <div class="loader" id="loader">
-    <div class="spinner"></div>
-    <div class="loader-text">Loading live data from Google Sheets...</div>
-  </div>
-  <div id="db" style="display:none">
-    <section><div class="section-hdr">Pipeline scorecard</div><div class="kpi-grid" id="kg"></div></section>
-    <div class="two-col">
-      <div class="card"><div class="section-hdr">Division breakdown</div><table id="dt"></table></div>
-      <div class="card"><div class="section-hdr">Contract portfolio (PKR)</div><table id="pt"></table></div>
-    </div>
-    <section><div class="section-hdr">Procurement milestone funnel</div><div class="funnel" id="fn"></div></section>
-    <section><div class="section-hdr">Open alerts — intervention required</div><div class="card" style="padding:0;overflow:hidden"><table id="alt"></table></div></section>
-  </div>
-  <div id="err" style="display:none">
-    <div class="error-card">
-      <h3>Could not load data</h3>
-      <p>There was a problem connecting to Google Sheets. Please check your internet connection and try again.</p>
-      <button class="retry-btn" onclick="load()">Retry now</button>
-    </div>
-  </div>
-</main>
+<!-- ALERT STRIP -->
+<div class="alert-strip" id="alert-strip">
+  <div class="alert-icon">!</div>
+  <span id="alert-text">Loading live data from Google Sheets...</span>
+</div>
 
-<footer class="footer">
-  <span>Live data · Hospicare · Critical Care · Medical Care</span>
-  <span class="live" id="ll">● Loading...</span>
+<!-- TABS -->
+<nav class="tabs-bar">
+  <button class="tab-btn active" onclick="switchTab(0)">Overview</button>
+  <button class="tab-btn" onclick="switchTab(1)">Tender pipeline</button>
+  <button class="tab-btn" onclick="switchTab(2)">Sales performance</button>
+  <button class="tab-btn" onclick="switchTab(3)">Payments</button>
+  <button class="tab-btn" onclick="switchTab(4)">PO / LC-BC</button>
+</nav>
+
+<!-- TAB 0: OVERVIEW -->
+<div class="panel active" id="tab0">
+  <div class="kpi-grid" id="kpi-overview">
+    <div class="kpi kpi-navy"><div class="kpi-l">Combined sales</div><div class="kpi-v" style="color:var(--nb)">2.03B</div><div class="kpi-s">IBLHC 1.35B + TSCL 683M</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--nb)"></div></div></div>
+    <div class="kpi kpi-green"><div class="kpi-l">Contracts won</div><div class="kpi-v" id="ov-won" style="color:var(--green)">—</div><div class="kpi-s" id="ov-won-s">Loading...</div><div class="kpi-bar"><div class="kpi-bar-fill" id="ov-won-bar" style="background:var(--green)"></div></div></div>
+    <div class="kpi kpi-blue"><div class="kpi-l">Contract portfolio</div><div class="kpi-v" id="ov-cval" style="color:var(--blue)">—</div><div class="kpi-s">Total awarded PKR</div><div class="kpi-bar"><div class="kpi-bar-fill" id="ov-cval-bar" style="background:var(--blue)"></div></div></div>
+    <div class="kpi kpi-red"><div class="kpi-l">Supply pending</div><div class="kpi-v" id="ov-pend" style="color:var(--red)">—</div><div class="kpi-s" id="ov-pend-s">Loading...</div><div class="kpi-bar"><div class="kpi-bar-fill" id="ov-pend-bar" style="background:var(--red)"></div></div></div>
+    <div class="kpi kpi-amber"><div class="kpi-l">Payment outstanding</div><div class="kpi-v" style="color:var(--amber)">994M</div><div class="kpi-s">245 invoices unpaid</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:47%;background:var(--amber)"></div></div></div>
+    <div class="kpi kpi-teal"><div class="kpi-l">LC/BC issued</div><div class="kpi-v" style="color:var(--teal)">180</div><div class="kpi-s">TSCL 80 · IBLHC 100</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:87%;background:var(--teal)"></div></div></div>
+  </div>
+
+  <!-- CAROUSEL -->
+  <div class="carousel-wrap">
+    <div class="cprog-bar"><div class="cprog-fill" id="cpfill"></div></div>
+    <div class="carousel-track" id="ctrack">
+      <div class="carousel-slide">
+        <div class="slide-eyebrow"><span>01 / 05</span><div class="slide-eyebrow-line"></div><span>Sales performance</span></div>
+        <div class="slide-big" style="color:var(--nb)">2.03B</div>
+        <div class="slide-sub">Combined IBLHC + TSCL net sales · FY 2025–26 (PKR)</div>
+        <div class="slide-grid">
+          <div class="slide-item"><div class="slide-item-l">IBLHC total</div><div class="slide-item-v" style="color:var(--blue)">1.35B</div><div class="slide-item-s">Tender 606M · Private 696M</div></div>
+          <div class="slide-item"><div class="slide-item-l">TSCL total</div><div class="slide-item-v" style="color:var(--nb3)">683M</div><div class="slide-item-s">100% tender channel</div></div>
+          <div class="slide-item"><div class="slide-item-l">IBLHC by BL division</div><div class="slide-item-s" style="margin-top:6px;font-size:11px;line-height:2;color:var(--text2)">MDD: <strong>652M</strong> &nbsp; CC: <strong>550M</strong> &nbsp; HC: <strong>148M</strong></div></div>
+          <div class="slide-item"><div class="slide-item-l">TSCL by BL division</div><div class="slide-item-s" style="margin-top:6px;font-size:11px;line-height:2;color:var(--text2)">HC: <strong>621M</strong> &nbsp; CC: <strong>62M</strong></div></div>
+        </div>
+      </div>
+      <div class="carousel-slide">
+        <div class="slide-eyebrow"><span>02 / 05</span><div class="slide-eyebrow-line"></div><span>Tender pipeline</span></div>
+        <div class="slide-big" id="c2-won" style="color:var(--green)">—</div>
+        <div class="slide-sub">Contracts won across CC · HC · MC divisions (live from Google Sheets)</div>
+        <div class="slide-grid">
+          <div class="slide-item"><div class="slide-item-l">Critical Care</div><div class="slide-item-v" id="c2-cc" style="color:var(--green)">—</div><div class="slide-item-s" id="c2-cc-s">Loading...</div></div>
+          <div class="slide-item"><div class="slide-item-l">Hospicare</div><div class="slide-item-v" id="c2-hc" style="color:var(--amber)">—</div><div class="slide-item-s" id="c2-hc-s">Loading...</div></div>
+          <div class="slide-item"><div class="slide-item-l">Medical Care</div><div class="slide-item-v" id="c2-mc" style="color:var(--blue)">—</div><div class="slide-item-s" id="c2-mc-s">Loading...</div></div>
+          <div class="slide-item"><div class="slide-item-l">Overall win rate</div><div class="slide-item-v" id="c2-rate">—</div><div class="slide-item-s" id="c2-rate-s">Loading...</div></div>
+        </div>
+      </div>
+      <div class="carousel-slide">
+        <div class="slide-eyebrow"><span>03 / 05</span><div class="slide-eyebrow-line"></div><span>Payment status</span></div>
+        <div class="slide-big" style="color:var(--amber)">994M</div>
+        <div class="slide-sub">Outstanding IBLHC receivables · 245 invoices unpaid (PKR)</div>
+        <div class="slide-grid">
+          <div class="slide-item"><div class="slide-item-l">Total invoiced</div><div class="slide-item-v" style="color:var(--nb)">4.25B</div><div class="slide-item-s">Lifetime IBLHC billings</div></div>
+          <div class="slide-item"><div class="slide-item-l">Payments received</div><div class="slide-item-v" style="color:var(--green)">1.13B</div><div class="slide-item-s">27% recovery rate</div></div>
+          <div class="slide-item"><div class="slide-item-l">Outstanding</div><div class="slide-item-v" style="color:var(--red)">994M</div><div class="slide-item-s">245 invoices · action needed</div></div>
+          <div class="slide-item"><div class="slide-item-l">Recovery gap</div><div class="slide-item-v" style="color:var(--amber)">73%</div><div class="slide-item-s">Of total receivables unpaid</div></div>
+        </div>
+      </div>
+      <div class="carousel-slide">
+        <div class="slide-eyebrow"><span>04 / 05</span><div class="slide-eyebrow-line"></div><span>Contract portfolio</span></div>
+        <div class="slide-big" id="c4-total" style="color:var(--blue)">—</div>
+        <div class="slide-sub">Total awarded contract value across all three divisions (PKR)</div>
+        <div class="slide-grid">
+          <div class="slide-item"><div class="slide-item-l">Hospicare</div><div class="slide-item-v" id="c4-hc" style="color:var(--blue)">—</div><div class="slide-item-s" id="c4-hc-s">Loading...</div></div>
+          <div class="slide-item"><div class="slide-item-l">Critical Care</div><div class="slide-item-v" id="c4-cc" style="color:var(--nb3)">—</div><div class="slide-item-s" id="c4-cc-s">Loading...</div></div>
+          <div class="slide-item"><div class="slide-item-l">Medical Care</div><div class="slide-item-v" id="c4-mc" style="color:var(--teal)">—</div><div class="slide-item-s" id="c4-mc-s">Loading...</div></div>
+          <div class="slide-item"><div class="slide-item-l">POs issued</div><div class="slide-item-v" id="c4-po">—</div><div class="slide-item-s">Against won contracts</div></div>
+        </div>
+      </div>
+      <div class="carousel-slide">
+        <div class="slide-eyebrow"><span>05 / 05</span><div class="slide-eyebrow-line"></div><span>Critical alerts</span></div>
+        <div class="slide-big" id="c5-total" style="color:var(--red)">—</div>
+        <div class="slide-sub">Supply orders awarded but not yet delivered — immediate action required</div>
+        <div class="slide-grid">
+          <div class="slide-item" style="border-left:3px solid var(--red)"><div class="slide-item-l">HC supply pending</div><div class="slide-item-v" id="c5-hc" style="color:var(--red)">—</div><div class="slide-item-s">Highest exposure · escalate</div></div>
+          <div class="slide-item" style="border-left:3px solid var(--amber)"><div class="slide-item-l">MC supply pending</div><div class="slide-item-v" id="c5-mc" style="color:var(--amber)">—</div><div class="slide-item-s">Blood bags · oxygen masks</div></div>
+          <div class="slide-item" style="border-left:3px solid var(--green)"><div class="slide-item-l">CC supply pending</div><div class="slide-item-v" id="c5-cc" style="color:var(--green)">—</div><div class="slide-item-s">Near completion</div></div>
+          <div class="slide-item" style="border-left:3px solid var(--amber)"><div class="slide-item-l">Payments overdue</div><div class="slide-item-v" style="color:var(--amber)">245</div><div class="slide-item-s">PKR 994M outstanding</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="carousel-footer">
+      <div class="cdots" id="cdots"></div>
+      <div class="car-prog-txt" id="car-prog-txt">Slide 1 of 5</div>
+      <div class="car-btns">
+        <button class="car-btn" onclick="carNav(-1)" aria-label="Previous">‹</button>
+        <button class="car-btn" onclick="carNav(1)" aria-label="Next">›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="section-hdr"><div class="section-dot"></div>Division scorecard</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Division</th><th class="r">Total</th><th class="r">Won</th><th class="r">Win%</th><th class="r">Done</th><th class="r">Pending</th><th class="r">Value</th></tr></thead>
+          <tbody id="div-scorecard">
+            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:16px">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:13px">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-weight:600;letter-spacing:.5px">SUPPLY DELIVERY RATE BY DIVISION</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Critical Care
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" id="prog-cc" style="background:var(--green)"></div></div><span class="prog-val" id="prog-cc-v" style="color:var(--green)">—</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Hospicare
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" id="prog-hc" style="background:var(--amber)"></div></div><span class="prog-val" id="prog-hc-v" style="color:var(--amber)">—</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--text2)">Medical Care
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" id="prog-mc" style="background:var(--blue)"></div></div><span class="prog-val" id="prog-mc-v" style="color:var(--blue)">—</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-hdr"><div class="section-dot"></div>Sales by entity &amp; channel</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Entity</th><th>BL</th><th class="r">Net PKR</th><th>Channel</th></tr></thead>
+          <tbody>
+            <tr><td>IBLHC</td><td>MDD</td><td class="r" style="font-weight:500">652M</td><td><span class="badge bb">Mix</span></td></tr>
+            <tr><td>IBLHC</td><td>CC</td><td class="r" style="font-weight:500">550M</td><td><span class="badge bb">Mix</span></td></tr>
+            <tr><td>TSCL</td><td>HC</td><td class="r" style="font-weight:500">621M</td><td><span class="badge bn">Tender</span></td></tr>
+            <tr><td>IBLHC</td><td>HC</td><td class="r" style="font-weight:500">148M</td><td><span class="badge bb">Mix</span></td></tr>
+            <tr><td>TSCL</td><td>CC</td><td class="r" style="font-weight:500">62M</td><td><span class="badge bn">Tender</span></td></tr>
+            <tr class="tbl-total"><td colspan="2">Total</td><td class="r">2.03B</td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:13px">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-weight:600;letter-spacing:.5px">IBLHC CHANNEL MIX</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Tender — 45%
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:45%;background:var(--nb3)"></div></div><span class="prog-val" style="color:var(--nb3)">606M</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--text2)">Private — 55%
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:55%;background:var(--teal)"></div></div><span class="prog-val" style="color:var(--teal)">696M</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 1: TENDER PIPELINE -->
+<div class="panel" id="tab1">
+  <div class="search-row">
+    <div class="search-box">
+      <span style="color:var(--text3);font-size:14px">⌕</span>
+      <input id="srch" placeholder="Search institution, tender ID, product, status..." oninput="filterTable()"/>
+    </div>
+    <div class="div-filter">
+      <button class="div-btn active" onclick="setDiv('all',this)">All</button>
+      <button class="div-btn" onclick="setDiv('CC',this)">CC</button>
+      <button class="div-btn" onclick="setDiv('HC',this)">HC</button>
+      <button class="div-btn" onclick="setDiv('MC',this)">MC</button>
+    </div>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Div</th><th>Tender ID</th><th>Institution</th><th>Product</th><th>Awarded</th><th>Supply</th><th>PO</th><th>Payment</th><th class="r">Value PKR</th></tr></thead>
+      <tbody id="tender-body"></tbody>
+    </table>
+    <div class="no-results" id="no-results" style="display:none">No records match your search</div>
+  </div>
+</div>
+
+<!-- TAB 2: SALES -->
+<div class="panel" id="tab2">
+  <div class="two-col" style="margin-bottom:14px">
+    <div class="kpi kpi-navy"><div class="kpi-l">IBLHC net sales</div><div class="kpi-v" style="color:var(--nb)">1.35B</div><div class="kpi-s">2,370 billing lines · FY 25-26</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-l">TSCL net sales</div><div class="kpi-v" style="color:var(--blue)">683M</div><div class="kpi-s">133 billing lines · FY 25-26</div></div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="section-hdr"><div class="section-dot"></div>IBLHC sales by BL division</div>
+    <div class="legend-row">
+      <span class="legend-item"><span class="legend-sq" style="background:#0f2d52"></span>MDD 652M</span>
+      <span class="legend-item"><span class="legend-sq" style="background:#1d4ed8"></span>CC 550M</span>
+      <span class="legend-item"><span class="legend-sq" style="background:#60a5fa"></span>HC 148M</span>
+    </div>
+    <div class="chart-wrap" style="height:200px"><canvas id="c1" role="img" aria-label="IBLHC sales by division bar chart">MDD 652M, CC 550M, HC 148M</canvas></div>
+  </div>
+  <div class="card">
+    <div class="section-hdr"><div class="section-dot"></div>IBLHC vs TSCL — channel breakdown</div>
+    <div class="legend-row">
+      <span class="legend-item"><span class="legend-sq" style="background:#0f2d52"></span>IBLHC Tender 606M</span>
+      <span class="legend-item"><span class="legend-sq" style="background:#38bdf8"></span>IBLHC Private 696M</span>
+      <span class="legend-item"><span class="legend-sq" style="background:#7c3aed"></span>TSCL Tender 683M</span>
+    </div>
+    <div class="chart-wrap" style="height:200px"><canvas id="c2" role="img" aria-label="Sales channel comparison bar chart">IBLHC Tender 606M, IBLHC Private 696M, TSCL 683M</canvas></div>
+  </div>
+</div>
+
+<!-- TAB 3: PAYMENTS -->
+<div class="panel" id="tab3">
+  <div class="three-kpi">
+    <div class="kpi kpi-navy"><div class="kpi-l">Total invoiced</div><div class="kpi-v" style="color:var(--nb)">4.25B</div><div class="kpi-s">IBLHC lifetime billings</div></div>
+    <div class="kpi kpi-green"><div class="kpi-l">Received</div><div class="kpi-v" style="color:var(--green)">1.13B</div><div class="kpi-s">27% of total · 309 invoices</div></div>
+    <div class="kpi kpi-red"><div class="kpi-l">Outstanding</div><div class="kpi-v" style="color:var(--red)">994M</div><div class="kpi-s">245 unpaid invoices</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="section-hdr"><div class="section-dot"></div>Payment recovery status</div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-sq" style="background:#15803d"></span>Received 1.13B</span>
+        <span class="legend-item"><span class="legend-sq" style="background:#b91c1c"></span>Outstanding 994M</span>
+      </div>
+      <div class="chart-wrap" style="height:200px"><canvas id="c3" role="img" aria-label="Payment status doughnut chart">Received 1.13B, Outstanding 994M</canvas></div>
+      <div style="margin-top:12px;padding:10px 12px;background:var(--lb);border-radius:8px;border:1px solid var(--lb3)">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:4px">RECOVERY SUMMARY</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.9">
+          Recovery rate: <strong style="color:var(--green)">27%</strong> &nbsp;·&nbsp;
+          Outstanding: <strong style="color:var(--red)">PKR 994M</strong><br>
+          Across <strong>245 invoices</strong> pending clearance
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-hdr"><div class="section-dot"></div>Recent invoices</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Institution</th><th class="r">PKR</th><th>Status</th><th class="r">Days</th></tr></thead>
+          <tbody>
+            <tr><td style="font-size:11px">Lady Reading Hospital (MTI)</td><td class="r">900,000</td><td><span class="badge br">Not received</span></td><td class="r">—</td></tr>
+            <tr><td style="font-size:11px">Lady Reading Hospital (MTI)</td><td class="r">1,800,000</td><td><span class="badge br">Not received</span></td><td class="r">—</td></tr>
+            <tr><td style="font-size:11px">Lady Reading Hospital (MTI)</td><td class="r">415,000</td><td><span class="badge br">Not received</span></td><td class="r">—</td></tr>
+            <tr><td style="font-size:11px">Additional Hospital Director</td><td class="r">499,000</td><td><span class="badge bg">Received</span></td><td class="r">155</td></tr>
+            <tr><td style="font-size:11px">Burns &amp; Plastic Surgery</td><td class="r">480,398</td><td><span class="badge bg">Received</span></td><td class="r">253</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:14px">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-weight:600;letter-spacing:.5px">PAYMENT AGING DISTRIBUTION</div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:3px">Not yet overdue
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:35%;background:var(--green)"></div></div><span class="prog-val" style="color:var(--green)">35%</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--text2);margin-bottom:3px">90–180 days
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:40%;background:var(--amber)"></div></div><span class="prog-val" style="color:var(--amber)">40%</span></div>
+        </div>
+        <div style="font-size:11px;color:var(--text2)">Over 180 days
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:25%;background:var(--red)"></div></div><span class="prog-val" style="color:var(--red)">25%</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 4: PO / LC-BC -->
+<div class="panel" id="tab4">
+  <div class="four-kpi">
+    <div class="kpi kpi-navy"><div class="kpi-l">TSCL PO records</div><div class="kpi-v">100</div><div class="kpi-s">Total purchase orders</div></div>
+    <div class="kpi kpi-green"><div class="kpi-l">TSCL LC/BC issued</div><div class="kpi-v" style="color:var(--green)">80</div><div class="kpi-s">80% coverage rate</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-l">IBLHC PO records</div><div class="kpi-v">107</div><div class="kpi-s">Total purchase orders</div></div>
+    <div class="kpi kpi-teal"><div class="kpi-l">IBLHC LC/BC issued</div><div class="kpi-v" style="color:var(--teal)">100</div><div class="kpi-s">93% coverage rate</div></div>
+  </div>
+  <div class="two-col" style="margin-bottom:14px">
+    <div class="card">
+      <div class="section-hdr"><div class="section-dot"></div>LC/BC coverage by entity</div>
+      <div class="legend-row">
+        <span class="legend-item"><span class="legend-sq" style="background:#15803d"></span>Issued</span>
+        <span class="legend-item"><span class="legend-sq" style="background:#dbeafe;border:1px solid #93b8e0"></span>Pending</span>
+      </div>
+      <div class="chart-wrap" style="height:170px"><canvas id="c4" role="img" aria-label="LC/BC coverage stacked bar">TSCL 80/100, IBLHC 100/107</canvas></div>
+    </div>
+    <div class="card">
+      <div class="section-hdr"><div class="section-dot"></div>LC/BC coverage progress</div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">TSCL — 80 of 100 issued</div>
+        <div class="prog-row"><div class="prog-bar-wrap" style="height:10px;border-radius:5px"><div class="prog-bar-fill" style="width:80%;background:var(--green);height:100%;border-radius:5px"></div></div><span class="prog-val" style="color:var(--green);font-size:14px">80%</span></div>
+      </div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">IBLHC — 100 of 107 issued</div>
+        <div class="prog-row"><div class="prog-bar-wrap" style="height:10px;border-radius:5px"><div class="prog-bar-fill" style="width:93%;background:var(--teal);height:100%;border-radius:5px"></div></div><span class="prog-val" style="color:var(--teal);font-size:14px">93%</span></div>
+      </div>
+      <div style="padding:12px 14px;background:var(--lb);border-radius:8px;border:1px solid var(--lb3)">
+        <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:4px">COMBINED LC/BC RATE</div>
+        <div style="font-size:28px;font-weight:500;color:var(--nb);letter-spacing:-1px">87%</div>
+        <div style="font-size:11px;color:var(--text3)">180 of 207 total POs covered</div>
+      </div>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <div class="section-hdr"><div class="section-dot"></div>TSCL recent PO entries</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Material</th><th class="r">Qty</th><th>LC/BC</th><th>BL date</th></tr></thead>
+          <tbody>
+            <tr><td style="font-size:11px">Medeco IV Cannula 20G</td><td class="r">155,000</td><td><span class="badge bn">No</span></td><td>04.01.25</td></tr>
+            <tr><td style="font-size:11px">Medeco IV Cannula 22G</td><td class="r">155,000</td><td><span class="badge bn">No</span></td><td>04.01.25</td></tr>
+            <tr><td style="font-size:11px">Medeco IV Cannula 20G</td><td class="r">90,000</td><td><span class="badge bn">No</span></td><td>04.01.25</td></tr>
+            <tr><td style="font-size:11px">Medeco IV Cannula 22G</td><td class="r">155,000</td><td><span class="badge bn">No</span></td><td>04.01.25</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="section-hdr"><div class="section-dot"></div>IBLHC recent PO entries</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Material</th><th class="r">Qty</th><th>LC/BC</th><th>BL date</th></tr></thead>
+          <tbody>
+            <tr><td style="font-size:11px">Searle Dialyzer Low Flux 1.6</td><td class="r">4,700</td><td><span class="badge bg">Yes</span></td><td>03.06.25</td></tr>
+            <tr><td style="font-size:11px">Searle Dialyzer Low Flux 1.6</td><td class="r">13,732</td><td><span class="badge bg">Yes</span></td><td>03.06.25</td></tr>
+            <tr><td style="font-size:11px">WEGO Blood Bag Double</td><td class="r">46,000</td><td><span class="badge bg">Yes</span></td><td>23.05.25</td></tr>
+            <tr><td style="font-size:11px">WEGO Blood Transfusion Set</td><td class="r">50,000</td><td><span class="badge bg">Yes</span></td><td>23.05.25</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<footer class="footer-bar">
+  <span>IBL Healthcare · MSD Division · IBLHC Sales · TSCL Sales · CC / HC / MC Tenders · Payments · PO / LC-BC — FY 2025–26</span>
+  <span class="live-txt" id="footer-status">● Connecting to Google Sheets...</span>
 </footer>
 
+</div>
+
 <script>
-// ── HARDCODED URLS — works on every device, no setup needed ──────────────────
+// ── LIVE GOOGLE SHEETS URLS (hardcoded) ──────────────────────────────────────
 const URLS = {
-  hc: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHBHG1Q98dm1wGXDq1Pf6INIsetSkzcb3c2LOb6_dw03BrxqmNQ7Glzb39BVlfMv1qxKale4Indkph/pub?gid=1785407068&single=true&output=csv',
   cc: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHBHG1Q98dm1wGXDq1Pf6INIsetSkzcb3c2LOb6_dw03BrxqmNQ7Glzb39BVlfMv1qxKale4Indkph/pub?gid=1337144373&single=true&output=csv',
+  hc: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHBHG1Q98dm1wGXDq1Pf6INIsetSkzcb3c2LOb6_dw03BrxqmNQ7Glzb39BVlfMv1qxKale4Indkph/pub?gid=1785407068&single=true&output=csv',
   mc: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHBHG1Q98dm1wGXDq1Pf6INIsetSkzcb3c2LOb6_dw03BrxqmNQ7Glzb39BVlfMv1qxKale4Indkph/pub?gid=1154834754&single=true&output=csv'
 };
 
 // ── CLOCK ────────────────────────────────────────────────────────────────────
 const D=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-let cds=300, lr=new Date();
-
+let cds=300,lr=new Date();
 function ft(d){let h=d.getHours(),m=d.getMinutes(),s=d.getSeconds();const a=h>=12?'PM':'AM';h=h%12||12;return`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${a}`}
 function fd(d){return`${D[d.getDay()]}, ${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`}
 function fs(d){return`${String(d.getHours()%12||12).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${d.getHours()>=12?'PM':'AM'}`}
-function fp(n){if(!n||isNaN(n))return'—';if(n>=1e9)return'PKR '+(n/1e9).toFixed(2)+'B';if(n>=1e6)return'PKR '+(n/1e6).toFixed(1)+'M';return'PKR '+Math.round(n).toLocaleString()}
-function pc(a,b){return b?Math.round(a/b*100):0}
-
 function tick(){
-  const now=new Date();
-  document.getElementById('clk').textContent=ft(now);
-  document.getElementById('hdt').textContent=fd(now);
+  const n=new Date();
+  document.getElementById('clk').textContent=ft(n);
+  document.getElementById('hdt').textContent=fd(n);
   document.getElementById('ref').textContent=fs(lr);
   cds--;
-  if(cds<=0){cds=300;lr=new Date();load();}
-  const m=Math.floor(cds/60),s=cds%60;
-  document.getElementById('cd').textContent=`${m}:${String(s).padStart(2,'0')}`;
+  if(cds<=0){cds=300;lr=new Date();loadData();}
+  document.getElementById('cd').textContent=`${Math.floor(cds/60)}:${String(cds%60).padStart(2,'0')}`;
 }
-tick(); setInterval(tick,1000);
+tick();setInterval(tick,1000);
 
-// ── PARSE ────────────────────────────────────────────────────────────────────
-function parse(csv){
+// ── TAB SWITCHING ─────────────────────────────────────────────────────────────
+function switchTab(i){
+  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+}
+
+// ── CAROUSEL ──────────────────────────────────────────────────────────────────
+let cur=0,carTimer=null;
+const TOTAL=5;
+function buildDots(){
+  const dc=document.getElementById('cdots');dc.innerHTML='';
+  for(let i=0;i<TOTAL;i++){
+    const d=document.createElement('div');
+    d.className='cdot'+(i===0?' active':'');
+    d.onclick=()=>goSlide(i);dc.appendChild(d);
+  }
+}
+function startProg(){
+  const pf=document.getElementById('cpfill');
+  pf.style.transition='none';pf.style.width='0%';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    pf.style.transition='width 5s linear';pf.style.width='100%';
+  }));
+}
+function goSlide(i){
+  cur=(i+TOTAL)%TOTAL;
+  document.getElementById('ctrack').style.transform=`translateX(-${cur*100}%)`;
+  document.querySelectorAll('.cdot').forEach((d,j)=>d.classList.toggle('active',j===cur));
+  document.getElementById('car-prog-txt').textContent=`Slide ${cur+1} of ${TOTAL}`;
+  startProg();
+}
+function carNav(d){clearInterval(carTimer);goSlide(cur+d);carTimer=setInterval(()=>goSlide(cur+1),5000);}
+buildDots();startProg();
+carTimer=setInterval(()=>goSlide(cur+1),5000);
+
+// ── NUMBER HELPERS ────────────────────────────────────────────────────────────
+function cleanNum(v){
+  if(v===null||v===undefined)return 0;
+  let s=String(v).replace(/\xa0/g,'').replace(/\u00a0/g,'').trim();
+  if(!s||s==='-'||s.toLowerCase()==='nan'||s.toLowerCase()==='none')return 0;
+  s=s.replace(/[PKRpkr,\s]/g,'').replace(/[^\d.\-]/g,'');
+  const n=parseFloat(s);return isNaN(n)?0:n;
+}
+function isYes(v){return['yes','y','1','true'].includes(String(v||'').replace(/\xa0/g,'').trim().toLowerCase())}
+function isNo(v){return['no','n','0','false'].includes(String(v||'').replace(/\xa0/g,'').trim().toLowerCase())}
+function findCol(headers,...kws){
+  const cl=headers.map(h=>({orig:h,c:h.toLowerCase().replace(/[^a-z0-9]/g,'')}));
+  const k=kws.map(x=>x.toLowerCase().replace(/[^a-z0-9]/g,''));
+  const m=cl.find(h=>k.every(x=>h.c.includes(x)));
+  return m?m.orig:null;
+}
+function fmtPKR(n){if(!n||isNaN(n))return'—';if(n>=1e9)return'PKR '+(n/1e9).toFixed(2)+'B';if(n>=1e6)return'PKR '+(n/1e6).toFixed(1)+'M';return'PKR '+Math.round(n).toLocaleString()}
+function fmtShort(n){if(!n||isNaN(n))return'—';if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';return Math.round(n).toLocaleString()}
+function pct(a,b){return b?Math.round(a/b*100):0}
+
+// ── PARSE CSV ────────────────────────────────────────────────────────────────
+function parseSheet(csv,divName){
   const rows=Papa.parse(csv,{header:true,skipEmptyLines:true}).data;
-  if(!rows.length)return{total:0,won:0,po:0,suppYes:0,suppNo:0,dtl:0,paid:0,cval:0};
+  if(!rows.length)return null;
   const h=Object.keys(rows[0]);
-  function f(...kw){return h.find(x=>kw.every(k=>x.toLowerCase().includes(k.toLowerCase())))||null}
-  const aC=f('contract','award')||f('award');
-  const sC=f('supplies','deliver')||f('supply','deliver');
-  const pC=f('po number')||f('po','number');
-  const pyC=f('payment','received');
-  const dC=f('dtl')||f('test','opening');
-  const cvC=f('contract','value')||f('contractvalue');
-  function cnt(c,v){return c?rows.filter(r=>(r[c]||'').trim().toLowerCase()===v.toLowerCase()).length:0}
-  function nb(c){return c?rows.filter(r=>{const v=(r[c]||'').trim().toLowerCase();return v&&v!=='nan'&&v!=='none'}).length:0}
-  function cs(){if(!cvC||!aC)return 0;return rows.reduce((s,r)=>{if((r[aC]||'').toLowerCase()==='yes'){const v=parseFloat((r[cvC]||'').replace(/,/g,''));if(!isNaN(v))s+=v;}return s;},0)}
-  return{total:rows.length,won:cnt(aC,'yes'),po:nb(pC),suppYes:cnt(sC,'yes'),suppNo:cnt(sC,'no'),dtl:nb(dC),paid:nb(pyC),cval:cs()}
+  const awardC=findCol(h,'contract','award')||findCol(h,'award');
+  const suppC=findCol(h,'supplies','deliver')||findCol(h,'supply','deliver');
+  const poC=findCol(h,'ponumber')||findCol(h,'po','number');
+  const payC=findCol(h,'payment','received')||findCol(h,'paymentreceived');
+  const dtlC=findCol(h,'dtl')||findCol(h,'test','opening');
+  const cvalC=findCol(h,'contractvalue')||findCol(h,'contract','value');
+  const instC=findCol(h,'institution');
+  const prodC=findCol(h,'products')||findCol(h,'product');
+  const tidC=findCol(h,'tenderid')||findCol(h,'tender','id');
+  const statusC=findCol(h,'tenderstatus')||findCol(h,'status');
+  const payExpC=findCol(h,'paymentexpected')||findCol(h,'payment','expected');
+
+  let cval=0;
+  rows.forEach(r=>{if(isYes(r[awardC]))cval+=cleanNum(r[cvalC]);});
+
+  const tenders=rows.map(r=>({
+    div:divName,
+    id:String(r[tidC]||'').trim(),
+    inst:String(r[instC]||'').trim(),
+    prod:String(r[prodC]||'').trim(),
+    awarded:String(r[awardC]||'').trim(),
+    supply:String(r[suppC]||'').trim(),
+    po:String(r[poC]||'').trim(),
+    pay:String(r[payExpC]||r[payC]||'').trim(),
+    status:String(r[statusC]||'').trim(),
+    cval:cval
+  })).filter(r=>r.id&&r.id.toLowerCase()!=='nan');
+
+  return{
+    total:rows.length,
+    won:rows.filter(r=>isYes(r[awardC])).length,
+    po:rows.filter(r=>{const v=String(r[poC]||'').trim().toLowerCase();return v&&v!=='nan'&&v!=='none'&&v!=='—'&&v!==''}).length,
+    suppYes:rows.filter(r=>isYes(r[suppC])).length,
+    suppNo:rows.filter(r=>isNo(r[suppC])).length,
+    dtl:rows.filter(r=>{const v=String(r[dtlC]||'').trim().toLowerCase();return v&&v!=='nan'&&v!=='none'}).length,
+    cval:cval,
+    tenders:tenders,
+    rows:rows
+  };
 }
 
-// ── RENDER ───────────────────────────────────────────────────────────────────
-function render(data){
-  const t={};
-  ['total','won','po','suppYes','suppNo','dtl','paid','cval'].forEach(k=>{
-    t[k]=(data.hc[k]||0)+(data.cc[k]||0)+(data.mc[k]||0);
+// ── SET ELEMENT ───────────────────────────────────────────────────────────────
+function $s(id,val){const el=document.getElementById(id);if(el)el.textContent=val}
+function $sw(id,w){const el=document.getElementById(id);if(el)el.style.width=w}
+
+// ── UPDATE UI ────────────────────────────────────────────────────────────────
+let TENDER_DATA=[];
+function updateUI(cc,hc,mc){
+  const t={
+    total:cc.total+hc.total+mc.total,
+    won:cc.won+hc.won+mc.won,
+    po:cc.po+hc.po+mc.po,
+    suppYes:cc.suppYes+hc.suppYes+mc.suppYes,
+    suppNo:cc.suppNo+hc.suppNo+mc.suppNo,
+    cval:cc.cval+hc.cval+mc.cval
+  };
+
+  // KPI Overview
+  $s('ov-won',t.won); $s('ov-won-s',`of ${t.total} total · ${pct(t.won,t.total)}% win rate`);
+  $sw('ov-won-bar',pct(t.won,t.total)+'%');
+  $s('ov-cval',fmtShort(t.cval)); $sw('ov-cval-bar','88%');
+  $s('ov-pend',t.suppNo); $s('ov-pend-s',`Of ${t.po} POs issued · critical`);
+  $sw('ov-pend-bar',pct(t.suppNo,t.po)+'%');
+
+  // Sub-header pills
+  $s('ph-won',`${t.won}/${t.total}`);
+  $s('ph-alerts',`${t.suppNo} pending`);
+
+  // Carousel slide 2
+  $s('c2-won',t.won);
+  $s('c2-cc',cc.won); $s('c2-cc-s',`Won of ${cc.total} · Supply: ${cc.suppYes}✓ ${cc.suppNo}✗`);
+  $s('c2-hc',hc.won); $s('c2-hc-s',`Won of ${hc.total} · Supply: ${hc.suppYes}✓ ${hc.suppNo}✗`);
+  $s('c2-mc',mc.won); $s('c2-mc-s',`Won of ${mc.total} · Supply: ${mc.suppYes}✓ ${mc.suppNo}✗`);
+  $s('c2-rate',pct(t.won,t.total)+'%'); $s('c2-rate-s',`${t.won} of ${t.total} tenders`);
+
+  // Carousel slide 4
+  $s('c4-total',fmtShort(t.cval));
+  $s('c4-hc',fmtShort(hc.cval)); $s('c4-hc-s',`${hc.won} contracts · surgical`);
+  $s('c4-cc',fmtShort(cc.cval)); $s('c4-cc-s',`${cc.won} contracts · dialysis`);
+  $s('c4-mc',fmtShort(mc.cval)); $s('c4-mc-s',`${mc.won} contracts · blood bags`);
+  $s('c4-po',t.po);
+
+  // Carousel slide 5
+  $s('c5-total',t.suppNo); $s('c5-hc',hc.suppNo); $s('c5-mc',mc.suppNo); $s('c5-cc',cc.suppNo);
+
+  // Alert strip
+  document.getElementById('alert-text').innerHTML=`<strong>${t.suppNo} supply orders pending</strong> — HC ${hc.suppNo} · MC ${mc.suppNo} · CC ${cc.suppNo} &nbsp;·&nbsp; <strong>PKR 994M</strong> outstanding (245 invoices) &nbsp;·&nbsp; HC has highest delivery exposure`;
+
+  // Division scorecard table
+  const divs=[
+    {n:'<span class="badge bdiv-cc">CC</span> Critical Care',d:cc},
+    {n:'<span class="badge bdiv-hc">HC</span> Hospicare',d:hc},
+    {n:'<span class="badge bdiv-mc">MC</span> Medical Care',d:mc},
+    {n:'All divisions',d:t,tot:true}
+  ];
+  document.getElementById('div-scorecard').innerHTML=divs.map(({n,d,tot})=>`
+    <tr class="${tot?'tbl-total':''}">
+      <td>${n}</td>
+      <td class="r">${d.total}</td>
+      <td class="r" style="font-weight:600;color:${tot?'var(--nb)':'var(--green)'}">${d.won}</td>
+      <td class="r">${pct(d.won,d.total)}%</td>
+      <td class="r" style="color:var(--green)">${d.suppYes}</td>
+      <td class="r"><span class="badge ${d.suppNo>10?'br':d.suppNo>3?'ba':'bg'}">${d.suppNo}</span></td>
+      <td class="r">${fmtShort(d.cval)}</td>
+    </tr>`).join('');
+
+  // Progress bars
+  const ccRate=pct(cc.suppYes,cc.suppYes+cc.suppNo);
+  const hcRate=pct(hc.suppYes,hc.suppYes+hc.suppNo);
+  const mcRate=pct(mc.suppYes,mc.suppYes+mc.suppNo);
+  $sw('prog-cc',ccRate+'%'); $s('prog-cc-v',ccRate+'%');
+  $sw('prog-hc',hcRate+'%'); $s('prog-hc-v',hcRate+'%');
+  $sw('prog-mc',mcRate+'%'); $s('prog-mc-v',mcRate+'%');
+
+  // Tender pipeline data for search table
+  TENDER_DATA=[
+    ...cc.tenders.map(r=>({...r,div:'CC'})),
+    ...hc.tenders.map(r=>({...r,div:'HC'})),
+    ...mc.tenders.map(r=>({...r,div:'MC'}))
+  ];
+  filterTable();
+
+  // Footer
+  document.getElementById('footer-status').textContent='● Live — auto-refreshes every 5 min';
+  document.getElementById('footer-status').style.color='#4ade80';
+}
+
+// ── TENDER TABLE ──────────────────────────────────────────────────────────────
+let activediv='all';
+function setDiv(d,btn){activediv=d;document.querySelectorAll('.div-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');filterTable();}
+function filterTable(){
+  const q=(document.getElementById('srch')?.value||'').toLowerCase();
+  const rows=TENDER_DATA.filter(r=>{
+    const dm=activediv==='all'||r.div===activediv;
+    const tm=!q||Object.values(r).some(v=>String(v).toLowerCase().includes(q));
+    return dm&&tm&&r.id;
   });
-
-  // Alert banner
-  if(t.suppNo>0){
-    document.getElementById('ab').style.display='flex';
-    document.getElementById('at').innerHTML=`<strong>${t.suppNo} supply orders pending</strong> — contract awarded, delivery not confirmed. &nbsp;|&nbsp; <strong>${t.paid}</strong> of ${t.won} contracts have confirmed payments.`;
-  }
-
-  // KPIs
-  document.getElementById('kg').innerHTML=[
-    {l:'Total entries',   v:t.total,   s:'All divisions',             p:100,               c:'#0a1628'},
-    {l:'Contracts won',   v:t.won,     s:pc(t.won,t.total)+'% win rate', p:pc(t.won,t.total), c:'#16a34a'},
-    {l:'POs generated',   v:t.po,      s:pc(t.po,t.won)+'% of contracts',p:pc(t.po,t.won),    c:'#2563eb'},
-    {l:'Supplies done',   v:t.suppYes, s:pc(t.suppYes,t.po)+'% of POs',  p:pc(t.suppYes,t.po),c:'#16a34a'},
-    {l:'Supply pending',  v:t.suppNo,  s:'Critical — action needed',    p:pc(t.suppNo,t.po), c:'#dc2626'},
-    {l:'Payments cleared',v:t.paid,    s:pc(t.paid,t.won)+'% recovery',  p:pc(t.paid,t.won),  c:'#d97706'},
-  ].map(k=>`<div class="kpi-card"><div class="kpi-label">${k.l}</div><div class="kpi-val" style="color:${k.c}">${k.v}</div><div class="kpi-sub">${k.s}</div><div class="kpi-prog"><div class="kpi-prog-fill" style="width:${k.p}%;background:${k.c}"></div></div></div>`).join('');
-
-  // Division table
-  const divs=[['Hospicare',data.hc],['Critical Care',data.cc],['Medical Care',data.mc],['Total',t,true]];
-  document.getElementById('dt').innerHTML=`<thead><tr><th>Division</th><th class="r">Entries</th><th class="r">Won</th><th class="r">Win %</th><th class="r">Supplied</th><th class="r">Pending</th></tr></thead><tbody>${
-    divs.map(([n,d,tot])=>`<tr class="${tot?'tot':''}"><td><strong>${n}</strong></td><td class="r">${d.total}</td><td class="r" style="color:var(--green);font-weight:600">${d.won}</td><td class="r"><div class="pw"><span>${pc(d.won,d.total)}%</span><div class="pb"><div class="pf" style="width:${pc(d.won,d.total)}%;background:var(--green)"></div></div></div></td><td class="r" style="color:var(--green);font-weight:600">${d.suppYes}</td><td class="r"><span class="badge ${d.suppNo>0?'r':'g'}">${d.suppNo}</span></td></tr>`).join('')
-  }</tbody>`;
-
-  // Portfolio table
-  document.getElementById('pt').innerHTML=`<thead><tr><th>Division</th><th class="r">Contract value</th><th class="r">POs</th><th class="r">Paid</th></tr></thead><tbody>${
-    divs.map(([n,d,tot])=>`<tr class="${tot?'tot':''}"><td><strong>${n}</strong></td><td class="r"><strong>${fp(d.cval)}</strong></td><td class="r">${d.po}</td><td class="r"><span class="badge ${d.paid>5?'g':d.paid>0?'a':'n'}">${d.paid}</span></td></tr>`).join('')
-  }</tbody>`;
-
-  // Funnel
-  document.getElementById('fn').innerHTML=[
-    {l:'Bids submitted',    v:t.total,   p:100,                    c:'#2563eb'},
-    {l:'Contracts awarded', v:t.won,     p:pc(t.won,t.total),      c:'#16a34a'},
-    {l:'POs generated',     v:t.po,      p:pc(t.po,t.won),         c:'#7c3aed'},
-    {l:'Supplies delivered',v:t.suppYes, p:pc(t.suppYes,t.po),     c:'#0f766e'},
-    {l:'DTL cleared',       v:t.dtl,     p:pc(t.dtl,t.suppYes),    c:'#0284c7'},
-    {l:'Payments received', v:t.paid,    p:pc(t.paid,t.won),       c:'#d97706'},
-  ].map(s=>`<div class="fs"><div class="fl">${s.l}</div><div class="fv" style="color:${s.c}">${s.v}</div><div class="fp">${s.p===100?'Baseline':s.p+'% of prev'}</div><div class="fb"><div class="ff" style="width:${s.p}%;background:${s.c}"></div></div></div>`).join('');
-
-  // Alerts
-  document.getElementById('alt').innerHTML=`<thead><tr style="background:var(--bg2)"><th style="width:32px"></th><th>Alert</th><th class="r">Hospicare</th><th class="r">Critical Care</th><th class="r">Medical Care</th><th class="r">Total</th><th>Priority</th></tr></thead><tbody>${[
-    {dot:'#dc2626',l:'Supply pending — awarded, not delivered',      hc:data.hc.suppNo, cc:data.cc.suppNo, mc:data.mc.suppNo, b:'r',pr:'Critical'},
-    {dot:'#d97706',l:'Payment pending — recovery not confirmed',     hc:Math.max(0,data.hc.won-data.hc.paid), cc:Math.max(0,data.cc.won-data.cc.paid), mc:Math.max(0,data.mc.won-data.mc.paid), b:'a',pr:'High'},
-    {dot:'#d97706',l:'PO issued — delivery not yet confirmed',       hc:Math.max(0,data.hc.po-data.hc.suppYes), cc:Math.max(0,data.cc.po-data.cc.suppYes), mc:Math.max(0,data.mc.po-data.mc.suppYes), b:'a',pr:'High'},
-    {dot:'#2563eb',l:'Contract won — PO not yet generated',          hc:Math.max(0,data.hc.won-data.hc.po), cc:Math.max(0,data.cc.won-data.cc.po), mc:Math.max(0,data.mc.won-data.mc.po), b:'b',pr:'Medium'},
-    {dot:'#94a3b8',l:'DTL / testing not yet completed',              hc:Math.max(0,data.hc.po-data.hc.dtl), cc:Math.max(0,data.cc.po-data.cc.dtl), mc:Math.max(0,data.mc.po-data.mc.dtl), b:'n',pr:'Monitor'},
-  ].map(a=>`<tr><td style="text-align:center"><div class="dot" style="background:${a.dot};margin:0 auto"></div></td><td>${a.l}</td><td class="r"><strong>${Math.max(0,a.hc)}</strong></td><td class="r"><strong>${Math.max(0,a.cc)}</strong></td><td class="r"><strong>${Math.max(0,a.mc)}</strong></td><td class="r"><span class="badge ${a.b}">${Math.max(0,a.hc+a.cc+a.mc)}</span></td><td><span class="badge ${a.b}">${a.pr}</span></td></tr>`).join('')}</tbody>`;
-
-  // Show dashboard
-  document.getElementById('loader').style.display='none';
-  document.getElementById('err').style.display='none';
-  document.getElementById('db').style.display='block';
-  document.getElementById('ll').textContent='● Live — auto-refreshes every 5 min';
+  const dc={CC:'bdiv-cc',HC:'bdiv-hc',MC:'bdiv-mc'};
+  document.getElementById('tender-body').innerHTML=rows.map(r=>`
+    <tr>
+      <td><span class="badge ${dc[r.div]||'bn'}">${r.div}</span></td>
+      <td style="font-size:11px;color:var(--text3)">${r.id||'—'}</td>
+      <td style="font-size:11px">${r.inst||'—'}</td>
+      <td style="font-size:11px">${r.prod||'—'}</td>
+      <td><span class="dot-${isYes(r.awarded)?'g':isNo(r.awarded)?'r':'a'}"></span>${r.awarded||'—'}</td>
+      <td><span class="badge ${isYes(r.supply)?'bg':isNo(r.supply)?'br':'bn'}">${r.supply||'—'}</span></td>
+      <td style="font-size:10px;color:var(--text3)">${r.po||'—'}</td>
+      <td style="font-size:10px;color:var(--text3)">${r.pay||'—'}</td>
+      <td class="r" style="font-weight:500">${r.cval>0?fmtShort(r.cval)+'*':'—'}</td>
+    </tr>`).join('');
+  const nr=document.getElementById('no-results');
+  if(nr)nr.style.display=rows.length?'none':'block';
 }
 
-// ── LOAD ─────────────────────────────────────────────────────────────────────
-async function load(){
+// ── CHARTS ────────────────────────────────────────────────────────────────────
+let chartsBuilt=false;
+function buildCharts(){
+  if(chartsBuilt)return;chartsBuilt=true;
+  const gc=op=>`rgba(15,45,82,${op})`;
+  new Chart(document.getElementById('c1'),{type:'bar',data:{labels:['MDD','CC','HC'],datasets:[{data:[652,550,148],backgroundColor:['#0f2d52','#1d4ed8','#60a5fa'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'M',color:'#64748b'},grid:{color:gc(.06)}},x:{ticks:{color:'#64748b'},grid:{display:false}}}}});
+  new Chart(document.getElementById('c2'),{type:'bar',data:{labels:['IBLHC Tender','IBLHC Private','TSCL Tender'],datasets:[{data:[606,696,683],backgroundColor:['#0f2d52','#38bdf8','#7c3aed'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'M',color:'#64748b'},grid:{color:gc(.06)}},x:{ticks:{color:'#64748b'},grid:{display:false}}}}});
+  new Chart(document.getElementById('c3'),{type:'doughnut',data:{labels:['Received','Outstanding'],datasets:[{data:[1133,994],backgroundColor:['#15803d','#b91c1c'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
+  new Chart(document.getElementById('c4'),{type:'bar',data:{labels:['TSCL','IBLHC'],datasets:[{label:'Issued',data:[80,100],backgroundColor:'#15803d',borderRadius:4},{label:'Pending',data:[20,7],backgroundColor:'#dbeafe',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{color:'#64748b'},grid:{display:false}},y:{stacked:true,ticks:{color:'#64748b'},grid:{color:gc(.06)}}}}});
+}
+
+// ── LOAD DATA ────────────────────────────────────────────────────────────────
+async function loadData(){
   try{
-    document.getElementById('ll').textContent='● Refreshing...';
-    const[hcCsv,ccCsv,mcCsv]=await Promise.all([
-      fetch(URLS.hc).then(r=>r.text()),
-      fetch(URLS.cc).then(r=>r.text()),
-      fetch(URLS.mc).then(r=>r.text()),
+    const[ccCsv,hcCsv,mcCsv]=await Promise.all([
+      fetch(URLS.cc).then(r=>{if(!r.ok)throw new Error(r.status);return r.text()}),
+      fetch(URLS.hc).then(r=>{if(!r.ok)throw new Error(r.status);return r.text()}),
+      fetch(URLS.mc).then(r=>{if(!r.ok)throw new Error(r.status);return r.text()})
     ]);
-    lr=new Date(); cds=300;
-    render({hc:parse(hcCsv), cc:parse(ccCsv), mc:parse(mcCsv)});
+    lr=new Date();cds=300;
+    updateUI(parseSheet(ccCsv,'CC'),parseSheet(hcCsv,'HC'),parseSheet(mcCsv,'MC'));
+    buildCharts();
   }catch(e){
-    document.getElementById('loader').style.display='none';
-    document.getElementById('err').style.display='block';
-    document.getElementById('ll').textContent='⚠ Load error — retrying in 5 min';
-    document.getElementById('ll').style.color='#d97706';
+    document.getElementById('footer-status').textContent='⚠ Load error — retrying in 5 min';
+    document.getElementById('footer-status').style.color='#d97706';
+    buildCharts();
   }
 }
 
-load(); // Load immediately on page open
+loadData();
 </script>
 </body>
 </html>
