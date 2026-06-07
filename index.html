@@ -650,7 +650,7 @@ function parseSheet(csv,divName){
     po:String(r[poC]||'').trim(),
     pay:String(r[payExpC]||r[payC]||'').trim(),
     status:String(r[statusC]||'').trim(),
-    cval:cval
+    cval:cleanNum(r[cvalC])
   })).filter(r=>r.id&&r.id.toLowerCase()!=='nan');
 
   return{
@@ -773,7 +773,7 @@ function filterTable(){
       <td><span class="badge ${isYes(r.supply)?'bg':isNo(r.supply)?'br':'bn'}">${r.supply||'—'}</span></td>
       <td style="font-size:10px;color:var(--text3)">${r.po||'—'}</td>
       <td style="font-size:10px;color:var(--text3)">${r.pay||'—'}</td>
-      <td class="r" style="font-weight:500">${r.cval>0?fmtShort(r.cval)+'*':'—'}</td>
+      <td class="r" style="font-weight:500">${r.cval>0?fmtShort(r.cval):'—'}</td>
     </tr>`).join('');
   const nr=document.getElementById('no-results');
   if(nr)nr.style.display=rows.length?'none':'block';
