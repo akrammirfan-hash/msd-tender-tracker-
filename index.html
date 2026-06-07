@@ -150,6 +150,39 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
 .prog-bar-fill{height:100%;border-radius:3px}
 .prog-val{font-size:11px;font-weight:500;min-width:36px;text-align:right}
 
+/* GAP BANNER GRID */
+.gap-banner-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.gap-banner{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:13px 15px;display:flex;flex-direction:column;gap:4px;position:relative;overflow:hidden}
+.gap-banner::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.gap-red::before{background:var(--red)}.gap-amber::before{background:var(--amber)}
+.gap-blue::before{background:var(--blue)}.gap-gray::before{background:var(--text3)}
+.gap-b-num{font-size:32px;font-weight:500;letter-spacing:-1.5px;line-height:1}
+.gap-red .gap-b-num{color:var(--red)}.gap-amber .gap-b-num{color:var(--amber)}
+.gap-blue .gap-b-num{color:var(--blue)}.gap-gray .gap-b-num{color:var(--text3)}
+.gap-b-label{font-size:11px;color:var(--text2);line-height:1.4}
+.gap-b-label span{font-size:10px;color:var(--text3)}
+.gap-b-tag{display:inline-block;margin-top:4px;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:500;width:fit-content}
+
+/* PROCUREMENT FLOW */
+.proc-flow{display:flex;align-items:center;gap:0;overflow-x:auto;padding:8px 0}
+.proc-stage{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;min-width:72px}
+.proc-num{width:52px;height:52px;border-radius:50%;border:2px solid;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;flex-shrink:0}
+.proc-label{font-size:10px;color:var(--text3);text-align:center;line-height:1.4}
+.proc-connector{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:80px;flex-shrink:0}
+.proc-gap-pill{font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;text-align:center;white-space:nowrap}
+.proc-arrow{font-size:18px;color:var(--border2)}
+
+/* INTERVENTION CARDS */
+.intervention-grid{display:flex;flex-direction:column;gap:10px}
+.intervention-card{display:flex;gap:12px;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);border-left:3px solid;align-items:flex-start}
+.int-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.int-body{flex:1}
+.int-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px}
+.int-desc{font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:6px}
+.int-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+@media(max-width:600px){.proc-flow{gap:0}.proc-connector{min-width:50px}.intervention-card{flex-direction:column}}
+
 /* LOADER */
 .loader{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:14px}
 .spinner{width:36px;height:36px;border:3px solid var(--lb);border-top-color:var(--nb);border-radius:50%;animation:spin 1s linear infinite}
@@ -226,6 +259,7 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
   <button class="tab-btn" onclick="switchTab(2)">Sales performance</button>
   <button class="tab-btn" onclick="switchTab(3)">Payments</button>
   <button class="tab-btn" onclick="switchTab(4)">PO / LC-BC</button>
+  <button class="tab-btn" onclick="switchTab(5)" style="color:var(--red);font-weight:600">⚠ Critical gaps</button>
 </nav>
 
 <!-- TAB 0: OVERVIEW -->
@@ -359,6 +393,23 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
       </div>
     </div>
   </div>
+
+  <!-- PROCUREMENT BOTTLENECK WIDGET (Overview) -->
+  <div style="margin-top:16px">
+    <div class="section-hdr"><div class="section-dot" style="background:var(--red)"></div>Procurement bottlenecks — where the cycle is breaking right now</div>
+    <div class="gap-banner-grid" id="gap-banner-grid">
+      <div class="gap-banner gap-red"><div class="gap-b-num" id="gb1">—</div><div class="gap-b-label">Supply not delivered<br><span>PO issued · goods awaited</span></div><div class="gap-b-tag" style="background:var(--red-lt);color:var(--red)">Critical</div></div>
+      <div class="gap-banner gap-red"><div class="gap-b-num">245</div><div class="gap-b-label">Payments outstanding<br><span>PKR 994M uncollected</span></div><div class="gap-b-tag" style="background:var(--red-lt);color:var(--red)">Critical</div></div>
+      <div class="gap-banner gap-amber"><div class="gap-b-num" id="gb3">—</div><div class="gap-b-label">No PO after contract win<br><span>SC yet to action</span></div><div class="gap-b-tag" style="background:var(--amber-lt);color:var(--amber)">High</div></div>
+      <div class="gap-banner gap-amber"><div class="gap-b-num">27</div><div class="gap-b-label">LC/BC not established<br><span>Finance action needed</span></div><div class="gap-b-tag" style="background:var(--amber-lt);color:var(--amber)">High</div></div>
+      <div class="gap-banner gap-blue"><div class="gap-b-num" id="gb5">—</div><div class="gap-b-label">DTL testing pending<br><span>Lab clearance awaited</span></div><div class="gap-b-tag" style="background:var(--blue-lt);color:var(--blue)">Medium</div></div>
+      <div class="gap-banner gap-gray"><div class="gap-b-num" id="gb6">—</div><div class="gap-b-label">Tenders not finalized<br><span>Awaiting award decision</span></div><div class="gap-b-tag" style="background:var(--lb);color:var(--text3)">Monitor</div></div>
+    </div>
+    <div style="text-align:right;margin-top:8px">
+      <button onclick="switchTab(5)" style="background:none;border:none;color:var(--red);font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline">View full gap analysis →</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- TAB 1: TENDER PIPELINE -->
@@ -532,7 +583,157 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
 
 </div>
 
-<footer class="footer-bar">
+<!-- TAB 5: CRITICAL GAPS -->
+<div class="panel" id="tab5">
+
+  <!-- TOP SEVERITY CARDS -->
+  <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
+    <div class="kpi kpi-red"><div class="kpi-l">Supply not delivered</div><div class="kpi-v" id="g-supp" style="color:var(--red)">—</div><div class="kpi-s">POs issued, goods pending</div><div class="kpi-bar"><div class="kpi-bar-fill" id="g-supp-bar" style="background:var(--red)"></div></div></div>
+    <div class="kpi kpi-red"><div class="kpi-l">Payment not received</div><div class="kpi-v" style="color:var(--red)">245</div><div class="kpi-s">PKR 994M · 245 invoices</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:90%;background:var(--red)"></div></div></div>
+    <div class="kpi kpi-amber"><div class="kpi-l">No PO after award</div><div class="kpi-v" id="g-po" style="color:var(--amber)">—</div><div class="kpi-s">SC action pending</div><div class="kpi-bar"><div class="kpi-bar-fill" id="g-po-bar" style="background:var(--amber)"></div></div></div>
+    <div class="kpi kpi-amber"><div class="kpi-l">LC/BC not issued</div><div class="kpi-v" style="color:var(--amber)">27</div><div class="kpi-s">Finance gate blocked</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:55%;background:var(--amber)"></div></div></div>
+    <div class="kpi kpi-blue"><div class="kpi-l">DTL testing pending</div><div class="kpi-v" id="g-dtl" style="color:var(--blue)">—</div><div class="kpi-s">Quality gate awaited</div><div class="kpi-bar"><div class="kpi-bar-fill" id="g-dtl-bar" style="background:var(--blue)"></div></div></div>
+    <div class="kpi kpi-navy"><div class="kpi-l">Total open gaps</div><div class="kpi-v" id="g-total" style="color:var(--nb)">—</div><div class="kpi-s">Across all gap types</div><div class="kpi-bar"><div class="kpi-bar-fill" id="g-total-bar" style="background:var(--nb)"></div></div></div>
+  </div>
+
+  <!-- PROCUREMENT CYCLE FLOW -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="section-hdr"><div class="section-dot" style="background:var(--red)"></div>Procurement cycle — gap locations</div>
+    <div class="proc-flow" id="proc-flow">
+      <div class="proc-stage">
+        <div class="proc-num" id="pf-awarded" style="border-color:var(--green);color:var(--green)">—</div>
+        <div class="proc-label">Contracts<br>awarded</div>
+      </div>
+      <div class="proc-connector">
+        <div class="proc-gap-pill" id="pf-g1" style="background:var(--amber-lt);color:var(--amber)">— no PO</div>
+        <div class="proc-arrow">→</div>
+      </div>
+      <div class="proc-stage">
+        <div class="proc-num" id="pf-po" style="border-color:var(--blue);color:var(--blue)">—</div>
+        <div class="proc-label">POs<br>generated</div>
+      </div>
+      <div class="proc-connector">
+        <div class="proc-gap-pill" style="background:var(--amber-lt);color:var(--amber)">27 no LC/BC</div>
+        <div class="proc-arrow">→</div>
+      </div>
+      <div class="proc-stage">
+        <div class="proc-num" style="border-color:var(--teal);color:var(--teal)">180</div>
+        <div class="proc-label">LC/BC<br>issued</div>
+      </div>
+      <div class="proc-connector">
+        <div class="proc-gap-pill" id="pf-g3" style="background:var(--red-lt);color:var(--red)">— undelivered</div>
+        <div class="proc-arrow">→</div>
+      </div>
+      <div class="proc-stage">
+        <div class="proc-num" id="pf-supp" style="border-color:var(--green);color:var(--green)">—</div>
+        <div class="proc-label">Supplies<br>delivered</div>
+      </div>
+      <div class="proc-connector">
+        <div class="proc-gap-pill" id="pf-g4" style="background:var(--blue-lt);color:var(--blue)">— DTL wait</div>
+        <div class="proc-arrow">→</div>
+      </div>
+      <div class="proc-stage">
+        <div class="proc-num" id="pf-dtl" style="border-color:var(--nb3);color:var(--nb3)">—</div>
+        <div class="proc-label">DTL<br>cleared</div>
+      </div>
+      <div class="proc-connector">
+        <div class="proc-gap-pill" style="background:var(--red-lt);color:var(--red)">245 unpaid</div>
+        <div class="proc-arrow">→</div>
+      </div>
+      <div class="proc-stage">
+        <div class="proc-num" style="border-color:var(--amber);color:var(--amber)">22</div>
+        <div class="proc-label">Payments<br>received</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAP DETAIL TABLE -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="section-hdr"><div class="section-dot" style="background:var(--red)"></div>Gap detail — by division and responsible department</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Gap type</th>
+            <th>Stage blocked</th>
+            <th class="r">CC</th>
+            <th class="r">HC</th>
+            <th class="r">MC</th>
+            <th class="r">Total</th>
+            <th>Responsible</th>
+            <th>Severity</th>
+          </tr>
+        </thead>
+        <tbody id="gap-detail-body">
+          <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:16px">Loading live data...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MANAGEMENT INTERVENTIONS -->
+  <div class="card">
+    <div class="section-hdr"><div class="section-dot" style="background:var(--nb)"></div>Recommended management interventions</div>
+    <div class="intervention-grid">
+
+      <div class="intervention-card" style="border-left-color:var(--red)">
+        <div class="int-num" style="background:var(--red-lt);color:var(--red)">01</div>
+        <div class="int-body">
+          <div class="int-title">Expedite supply delivery — Hospicare (32 orders)</div>
+          <div class="int-desc">Highest gap in the portfolio. POs are issued but goods not arriving. Escalate with supplier immediately. MD / Group Head to review weekly until cleared.</div>
+          <div class="int-meta"><span class="badge br">Critical</span> <span style="font-size:10px;color:var(--text3)">Owner: Supply Chain / Commercial</span></div>
+        </div>
+      </div>
+
+      <div class="intervention-card" style="border-left-color:var(--red)">
+        <div class="int-num" style="background:var(--red-lt);color:var(--red)">02</div>
+        <div class="int-body">
+          <div class="int-title">Activate payment recovery — PKR 994M, 245 invoices</div>
+          <div class="int-desc">Collection team to engage DGHS Punjab, Lady Reading, and all outstanding accounts. Prioritise by invoice age. Consider legal notice for 180+ day cases.</div>
+          <div class="int-meta"><span class="badge br">Critical</span> <span style="font-size:10px;color:var(--text3)">Owner: Finance / Collections</span></div>
+        </div>
+      </div>
+
+      <div class="intervention-card" style="border-left-color:var(--amber)">
+        <div class="int-num" style="background:var(--amber-lt);color:var(--amber)">03</div>
+        <div class="int-body">
+          <div class="int-title">Clear PO backlog — contracts won without PO issuance</div>
+          <div class="int-desc">SC team to action all awarded contracts where PO has not been generated. Each day of delay costs delivery timeline and risks institutional relationships.</div>
+          <div class="int-meta"><span class="badge ba">High</span> <span style="font-size:10px;color:var(--text3)">Owner: Supply Chain / SC Manager</span></div>
+        </div>
+      </div>
+
+      <div class="intervention-card" style="border-left-color:var(--amber)">
+        <div class="int-num" style="background:var(--amber-lt);color:var(--amber)">04</div>
+        <div class="int-body">
+          <div class="int-title">Establish 27 pending LC/BC — unblock payment cycle</div>
+          <div class="int-desc">Finance to open LC/BC for all 27 pending PO lines (TSCL 20 + IBLHC 7). Unestablished LC/BC directly delays supplier payment and next shipment release.</div>
+          <div class="int-meta"><span class="badge ba">High</span> <span style="font-size:10px;color:var(--text3)">Owner: Finance / Treasury</span></div>
+        </div>
+      </div>
+
+      <div class="intervention-card" style="border-left-color:var(--blue)">
+        <div class="int-num" style="background:var(--blue-lt);color:var(--blue)">05</div>
+        <div class="int-body">
+          <div class="int-title">Fast-track DTL / quality testing for delivered supplies</div>
+          <div class="int-desc">Regulatory team to push DTL labs to expedite batch testing. Delayed DTL holds up invoice submission and triggers payment delays downstream.</div>
+          <div class="int-meta"><span class="badge bb">Medium</span> <span style="font-size:10px;color:var(--text3)">Owner: Regulatory Affairs / RA Manager</span></div>
+        </div>
+      </div>
+
+      <div class="intervention-card" style="border-left-color:var(--teal)">
+        <div class="int-num" style="background:var(--teal-lt);color:var(--teal)">06</div>
+        <div class="int-body">
+          <div class="int-title">Monitor Medical Care supply chain — 19 orders pending</div>
+          <div class="int-desc">Blood bags and oxygen masks are the primary pending lines. Confirm stock availability at WEGO. Set 30-day delivery deadline with weekly check-ins.</div>
+          <div class="int-meta"><span class="badge bt">Medium</span> <span style="font-size:10px;color:var(--text3)">Owner: MC Business Head</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
   <span>IBL Healthcare · MSD Division · IBLHC Sales · TSCL Sales · CC / HC / MC Tenders · Payments · PO / LC-BC — FY 2025–26</span>
   <span class="live-txt" id="footer-status">● Connecting to Google Sheets...</span>
 </footer>
@@ -739,7 +940,53 @@ function updateUI(cc,hc,mc){
   $sw('prog-hc',hcRate+'%'); $s('prog-hc-v',hcRate+'%');
   $sw('prog-mc',mcRate+'%'); $s('prog-mc-v',mcRate+'%');
 
-  // Tender pipeline data for search table
+  // Gaps widget on overview
+  const g_supp = t.suppNo;
+  const g_po   = Math.max(0, t.won - t.po);
+  const g_dtl  = Math.max(0, t.po - t.dtl);
+  const g_tot  = g_supp + g_po + g_dtl + 27 + 245;
+
+  $s('gb1', g_supp); $s('gb3', g_po); $s('gb5', g_dtl);
+  const g6 = Math.max(0, t.total - t.won);
+  $s('gb6', g6);
+
+  // Gaps tab KPIs
+  $s('g-supp', g_supp); $sw('g-supp-bar', Math.min(100, g_supp*2)+'%');
+  $s('g-po',   g_po);   $sw('g-po-bar',   Math.min(100, g_po*4)+'%');
+  $s('g-dtl',  g_dtl);  $sw('g-dtl-bar',  Math.min(100, g_dtl*2)+'%');
+  $s('g-total', g_tot); $sw('g-total-bar', '85%');
+
+  // Procurement flow
+  $s('pf-awarded', t.won);
+  $s('pf-po',  t.po);
+  $s('pf-supp', t.suppYes);
+  $s('pf-dtl',  t.dtl);
+  $s('pf-g1', g_po + ' no PO');
+  $s('pf-g3', g_supp + ' undelivered');
+  $s('pf-g4', g_dtl + ' DTL wait');
+
+  // Gap detail table
+  const gaps = [
+    {type:'Supply not delivered',stage:'PO → Delivery',cc:cc.suppNo,hc:hc.suppNo,mc:mc.suppNo,resp:'Supply Chain',sev:'Critical',sbadge:'br'},
+    {type:'Payment not received',stage:'Delivery → Payment',cc:0,hc:0,mc:0,extra:245,resp:'Finance / Collections',sev:'Critical',sbadge:'br'},
+    {type:'No PO after contract award',stage:'Award → PO',cc:Math.max(0,cc.won-cc.po),hc:Math.max(0,hc.won-hc.po),mc:Math.max(0,mc.won-mc.po),resp:'Supply Chain / SC',sev:'High',sbadge:'ba'},
+    {type:'LC/BC not established',stage:'PO → LC/BC',cc:0,hc:20,mc:7,resp:'Finance / Treasury',sev:'High',sbadge:'ba'},
+    {type:'DTL testing not cleared',stage:'Delivery → DTL',cc:Math.max(0,cc.po-cc.dtl),hc:Math.max(0,hc.po-hc.dtl),mc:Math.max(0,mc.po-mc.dtl),resp:'Regulatory Affairs',sev:'Medium',sbadge:'bb'},
+    {type:'Tender not yet finalized',stage:'Bid → Award',cc:Math.max(0,cc.total-cc.won),hc:Math.max(0,hc.total-hc.won),mc:Math.max(0,mc.total-mc.won),resp:'Business Dev / Tender',sev:'Monitor',sbadge:'bn'},
+  ];
+  document.getElementById('gap-detail-body').innerHTML = gaps.map(g => {
+    const tot = (g.extra||0) + g.cc + g.hc + g.mc;
+    return `<tr>
+      <td style="font-weight:500">${g.type}</td>
+      <td style="font-size:11px;color:var(--text3)">${g.stage}</td>
+      <td class="r"><strong>${g.cc||0}</strong></td>
+      <td class="r"><strong>${g.hc||0}</strong></td>
+      <td class="r"><strong>${g.mc||0}</strong></td>
+      <td class="r"><strong style="font-size:14px">${g.extra||tot}</strong></td>
+      <td style="font-size:11px">${g.resp}</td>
+      <td><span class="badge ${g.sbadge}">${g.sev}</span></td>
+    </tr>`;
+  }).join('');
   TENDER_DATA=[
     ...cc.tenders.map(r=>({...r,div:'CC'})),
     ...hc.tenders.map(r=>({...r,div:'HC'})),
