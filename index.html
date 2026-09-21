@@ -1238,6 +1238,19 @@ function handleDrop(e){
   if(file)handleFileSelect(file);
 }
 
+function matchSheet(wb,kws){
+  // kws is array of keyword arrays, any combo that matches wins
+  for(const kwSet of kws){
+    const kwArr=kwSet.map(k=>k.toLowerCase().replace(/[^a-z0-9]/g,''));
+    const found=wb.SheetNames.find(n=>{
+      const nc=n.toLowerCase().replace(/[^a-z0-9]/g,'');
+      return kwArr.every(k=>nc.includes(k));
+    });
+    if(found)return found;
+  }
+  return null;
+}
+
 function handleFileSelect(file){
   if(!file){return;}
   if(!file.name.match(/\.(xlsx|xls)$/i)){
@@ -1248,13 +1261,40 @@ function handleFileSelect(file){
   reader.onload=function(ev){
     try{
       const wb=XLSX.read(ev.target.result,{type:'array'});
-      const parsed=parseExcelWb(wb);
+      const sheets=wb.SheetNames;
+      // Map each role to the matched sheet name
+      const roleMap={
+        'IBLHC Sales': matchSheet(wb,[['iblhc','sale'],['iblhc','sales'],['iblhc']]),
+        'TSCL Sales':  matchSheet(wb,[['tscl','sale'],['tscl','sales'],['tscl']]),
+        'Payment / AR':matchSheet(wb,[['payment','detail'],['ar','aging'],['payment'],['aging'],['receivable']]),
+        'IBLHC PO':    matchSheet(wb,[['iblhc','po'],['iblhc','purchase'],['iblhc','order']]),
+        'TSCL PO':     matchSheet(wb,[['tscl','po'],['tscl','purchase'],['tscl','order']]),
+      };
+      const matched=Object.entries(roleMap).filter(([,v])=>v).map(([k,v])=>k+' → "'+v+'"');
+      const missed =Object.entries(roleMap).filter(([,v])=>!v).map(([k])=>k);
+      const parsed=parseExcelWbWithMap(wb,roleMap);
       __parsedSD=parsed;
-      setStatus('ok','✓ File parsed — '+file.name+'\nReady to apply. Click "Apply to dashboard" or "Save HTML" to deploy.');
-      document.getElementById('upd-apply').classList.add('ready');
-      document.getElementById('upd-dl').classList.add('ready');
+      const totM=parsed.iblhc_m+parsed.tscl_m;
+      const arM=parsed.ar_iblhc_m+parsed.ar_tscl_m;
+      let msg='';
+      if(matched.length===0){
+        msg='⚠ No sheets matched — nothing to update.\n\nSheets in your file:\n  '+sheets.join('\n  ')+'\n\nExpected sheet names containing keywords:\n  IBLHC + Sales\n  TSCL + Sales\n  Payment + Detail (or "AR Aging")\n  IBLHC + PO\n  TSCL + PO\n\nShare these sheet names so they can be mapped correctly.';
+        setStatus('err',msg);
+        document.getElementById('upd-apply').classList.remove('ready');
+        document.getElementById('upd-dl').classList.remove('ready');
+      } else {
+        msg='✓ Matched '+matched.length+'/5 sheets:\n  '+matched.join('\n  ');
+        if(missed.length)msg+='\n\nNot found (kept old values):\n  '+missed.join(', ');
+        msg+='\n\nValues to apply:\n';
+        msg+='  Sales: IBLHC '+parsed.iblhc_m+'M · TSCL '+parsed.tscl_m+'M = '+totM+'M\n';
+        msg+='  AR:    IBLHC '+parsed.ar_iblhc_m+'M · TSCL '+parsed.ar_tscl_m+'M = '+arM+'M\n';
+        msg+='  LC/BC: IBLHC '+parsed.lcbc_iblhc+'/'+parsed.po_iblhc+' · TSCL '+parsed.lcbc_tscl+'/'+parsed.po_tscl;
+        setStatus('ok',msg);
+        document.getElementById('upd-apply').classList.add('ready');
+        document.getElementById('upd-dl').classList.add('ready');
+      }
     }catch(err){
-      setStatus('err','Parse error: '+err.message);
+      setStatus('err','Parse error: '+err.message+'\n'+err.stack);
     }
   };
   reader.onerror=()=>setStatus('err','Could not read file');
@@ -1417,6 +1457,142 @@ function parseExcelWb(wb){
 
   // TSCL PO Details
   const tPOName=sheetName(wb,['tscl','po'])||sheetName(wb,['tscl','purchase']);
+  if(tPOName){
+    const {headers,rows}=sheetToRows(wb.Sheets[tPOName]);
+    const lcbcIdx=findColIdx(headers,'lc','bc')||findColIdx(headers,'lcbc');
+    const filled=rows.filter(r=>r.some(c=>String(c).trim()));
+    sd.po_tscl=filled.length;
+    if(lcbcIdx>=0){
+      sd.lcbc_tscl=filled.filter(r=>['yes','y','1','true'].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
+      sd.lcbc_tscl_pend=filled.filter(r=>['no','n','0','false',''].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
+    }
+    const arIdx=findColIdx(headers,'outstanding')||findColIdx(headers,'ar','amount');
+    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl');
+    if(arIdx>=0 && blIdx>=0){
+      let cc=0,hc=0;
+      filled.forEach(r=>{
+        const bl=String(r[blIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[arIdx]||'').replace(/[,\s]/g,''))||0;
+        if(bl.includes('cc')||bl.includes('critical'))cc+=v;
+        else if(bl.includes('hc')||bl.includes('hospi'))hc+=v;
+      });
+      if(cc>0)sd.tscl_cc_ar=cc;
+      if(hc>0)sd.tscl_hc_ar=hc;
+    }
+  }
+
+  return sd;
+}
+
+function parseExcelWbWithMap(wb,roleMap){
+  const sd={...SD};
+  const iSaleName=roleMap['IBLHC Sales'];
+  const tSaleName=roleMap['TSCL Sales'];
+  const payName  =roleMap['Payment / AR'];
+  const iPOName  =roleMap['IBLHC PO'];
+  const tPOName  =roleMap['TSCL PO'];
+
+  if(iSaleName){
+    const {headers,rows}=sheetToRows(wb.Sheets[iSaleName]);
+    const netIdx=findColIdx(headers,'net','sales')||findColIdx(headers,'net','value')||findColIdx(headers,'netsale');
+    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl','division')||findColIdx(headers,'bl');
+    const tot=colSum(rows,netIdx);
+    if(tot>0)sd.iblhc_m=Math.round(tot/1e6);
+    sd.iblhc_lines=rows.filter(r=>r.some(c=>String(c).trim())).length;
+    if(blIdx>=0){
+      let cc=0,hc=0,mdd=0;
+      rows.forEach(r=>{
+        const bl=String(r[blIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[netIdx]||'').replace(/[,\s]/g,''))||0;
+        if(bl.includes('cc')||bl.includes('critical'))cc+=v;
+        else if(bl.includes('hc')||bl.includes('hospi'))hc+=v;
+        else if(bl.includes('mdd')||bl.includes('medical')||bl.includes('disposable'))mdd+=v;
+      });
+      if(cc>0)sd.iblhc_cc_m=Math.round(cc/1e6);
+      if(hc>0)sd.iblhc_hc_m=Math.round(hc/1e6);
+      if(mdd>0)sd.iblhc_mdd_m=Math.round(mdd/1e6);
+    }
+  }
+
+  if(tSaleName){
+    const {headers,rows}=sheetToRows(wb.Sheets[tSaleName]);
+    const netIdx=findColIdx(headers,'net','sales')||findColIdx(headers,'net','value')||findColIdx(headers,'netsale');
+    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl','division')||findColIdx(headers,'bl');
+    const tot=colSum(rows,netIdx);
+    if(tot>0)sd.tscl_m=Math.round(tot/1e6);
+    sd.tscl_lines=rows.filter(r=>r.some(c=>String(c).trim())).length;
+    if(blIdx>=0){
+      let cc=0,hc=0;
+      rows.forEach(r=>{
+        const bl=String(r[blIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[netIdx]||'').replace(/[,\s]/g,''))||0;
+        if(bl.includes('cc')||bl.includes('critical'))cc+=v;
+        else if(bl.includes('hc')||bl.includes('hospi'))hc+=v;
+      });
+      if(cc>0)sd.tscl_cc_m=Math.round(cc/1e6);
+      if(hc>0)sd.tscl_hc_m=Math.round(hc/1e6);
+    }
+  }
+
+  if(payName){
+    const {headers,rows}=sheetToRows(wb.Sheets[payName]);
+    const buckets=[
+      {key:'ar_0_30_m',kws:['030','0to30','0 30','0-30']},
+      {key:'ar_31_60_m',kws:['3160','31to60','31-60']},
+      {key:'ar_61_90_m',kws:['6190','61to90','61-90']},
+      {key:'ar_3_6_m',kws:['3to6','3 6','3-6','3mo6','36mo']},
+      {key:'ar_6_12_m',kws:['6to12','6 12','6-12','612mo']},
+      {key:'ar_12_m',kws:['12mo','12plus','12+','above12','over12','12to24']},
+      {key:'ar_24_m',kws:['24mo','24plus','24+','above24','over24']},
+    ];
+    const entityIdx=findColIdx(headers,'entity')||findColIdx(headers,'company')||findColIdx(headers,'name');
+    const outIdx=findColIdx(headers,'outstanding')||findColIdx(headers,'balance')||findColIdx(headers,'amount');
+    if(outIdx>=0 && entityIdx>=0){
+      let iblhc=0,tscl=0;
+      rows.forEach(r=>{
+        const ent=String(r[entityIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[outIdx]||'').replace(/[,\s]/g,''))||0;
+        if(ent.includes('iblhc'))iblhc+=v;
+        else if(ent.includes('tscl'))tscl+=v;
+      });
+      if(iblhc>0)sd.ar_iblhc_m=Math.round(iblhc/1e6);
+      if(tscl>0)sd.ar_tscl_m=Math.round(tscl/1e6);
+    }
+    buckets.forEach(b=>{
+      const idx=headers.findIndex(h=>{
+        const hc=h.toLowerCase().replace(/[^a-z0-9]/g,'');
+        return b.kws.some(k=>hc.includes(k.replace(/[^a-z0-9]/g,'')));
+      });
+      if(idx>=0){const s=colSum(rows,idx);if(s>0)sd[b.key]=Math.round(s/1e6);}
+    });
+  }
+
+  if(iPOName){
+    const {headers,rows}=sheetToRows(wb.Sheets[iPOName]);
+    const lcbcIdx=findColIdx(headers,'lc','bc')||findColIdx(headers,'lcbc');
+    const filled=rows.filter(r=>r.some(c=>String(c).trim()));
+    sd.po_iblhc=filled.length;
+    if(lcbcIdx>=0){
+      sd.lcbc_iblhc=filled.filter(r=>['yes','y','1','true'].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
+      sd.lcbc_iblhc_pend=filled.filter(r=>['no','n','0','false',''].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
+    }
+    const arIdx=findColIdx(headers,'outstanding')||findColIdx(headers,'ar','amount');
+    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl');
+    if(arIdx>=0 && blIdx>=0){
+      let cc=0,hc=0,mdd=0;
+      filled.forEach(r=>{
+        const bl=String(r[blIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[arIdx]||'').replace(/[,\s]/g,''))||0;
+        if(bl.includes('cc')||bl.includes('critical'))cc+=v;
+        else if(bl.includes('hc')||bl.includes('hospi'))hc+=v;
+        else if(bl.includes('mdd')||bl.includes('disposable'))mdd+=v;
+      });
+      if(cc>0)sd.iblhc_cc_ar=cc;
+      if(hc>0)sd.iblhc_hc_ar=hc;
+      if(mdd>0)sd.iblhc_mdd_ar=mdd;
+    }
+  }
+
   if(tPOName){
     const {headers,rows}=sheetToRows(wb.Sheets[tPOName]);
     const lcbcIdx=findColIdx(headers,'lc','bc')||findColIdx(headers,'lcbc');
