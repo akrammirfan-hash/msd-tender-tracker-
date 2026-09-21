@@ -6,6 +6,7 @@
 <title>IBL Healthcare · MSD Command Centre</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
   --nb:#0f2d52;--nb2:#1a3f6f;--nb3:#1e4d8c;
@@ -205,6 +206,36 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
   .two-col,.three-kpi,.four-kpi{grid-template-columns:1fr}
   .kpi-v{font-size:22px}
 }
+
+/* ── UPLOAD BUTTON & MODAL ────────────────────────────────────────── */
+.upd-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap;margin-left:10px}
+.upd-btn:hover{background:rgba(255,255,255,.25)}
+.upd-btn-icon{font-size:15px;line-height:1}
+.upd-btn-txt{display:inline}
+@media(max-width:480px){.upd-btn-txt{display:none}}
+.upd-overlay{display:none;position:fixed;inset:0;background:rgba(10,20,40,.65);z-index:9999;align-items:center;justify-content:center}
+.upd-overlay.open{display:flex}
+.upd-modal{background:#fff;border-radius:16px;padding:28px 28px 24px;width:min(480px,92vw);box-shadow:0 24px 64px rgba(0,0,0,.3);position:relative}
+.upd-modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.upd-modal-title{font-size:17px;font-weight:700;color:var(--nb)}
+.upd-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--text3);line-height:1;padding:0}
+.upd-drop{border:2px dashed var(--border2);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:14px}
+.upd-drop.drag-over{border-color:var(--nb3);background:var(--lb2)}
+.upd-drop-icon{font-size:36px;margin-bottom:8px}
+.upd-drop-txt{font-size:13px;color:var(--text2);font-weight:500}
+.upd-drop-sub{font-size:11px;color:var(--text3);margin-top:4px}
+.upd-file-input{display:none}
+.upd-status{font-size:12px;padding:10px 14px;border-radius:8px;margin-bottom:14px;display:none}
+.upd-status.info{background:var(--lb2);color:var(--nb);display:block}
+.upd-status.ok{background:var(--green-lt);color:var(--green);display:block}
+.upd-status.err{background:var(--red-lt);color:var(--red);display:block}
+.upd-actions{display:flex;gap:8px;justify-content:flex-end}
+.upd-btn-apply{background:var(--nb);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;opacity:.4;pointer-events:none}
+.upd-btn-apply.ready{opacity:1;pointer-events:auto}
+.upd-btn-apply.ready:hover{background:var(--nb2)}
+.upd-btn-dl{background:var(--lb);color:var(--nb);border:1px solid var(--border);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;opacity:.4;pointer-events:none;display:none}
+.upd-btn-dl.ready{opacity:1;pointer-events:auto;display:inline-block}
+.upd-btn-dl:hover{background:var(--lb2)}
 </style>
 </head>
 <body>
@@ -230,6 +261,9 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
       <div class="refresh-pill"><div class="pulse"></div><span id="cd">5:00</span></div>
     </div>
   </div>
+  <button onclick="openUpload()" class="upd-btn" title="Upload updated Excel to refresh dashboard numbers">
+    <span class="upd-btn-icon">↑</span><span class="upd-btn-txt">Update data</span>
+  </button>
 </header>
 
 <!-- SUB HEADER -->
@@ -239,7 +273,7 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
     <span style="color:#c5d8f0">Hospicare · Critical Care · Medical Care</span>
   </div>
   <div class="stat-pills">
-    <div class="stat-pill">Sales <strong id="ph-sales">PKR 144M</strong></div>
+    <div class="stat-pill">Sales <strong id="ph-sales" data-sd="sd-pill-sales">PKR 144M</strong></div>
     <div class="stat-pill">Won <strong id="ph-won">94/141</strong></div>
     <div class="stat-pill">Outstanding <strong>PKR 1.04B</strong></div>
     <div class="stat-pill">Alerts <strong id="ph-alerts">25 pending</strong></div>
@@ -265,12 +299,12 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
 <!-- TAB 0: OVERVIEW -->
 <div class="panel active" id="tab0">
   <div class="kpi-grid" id="kpi-overview">
-    <div class="kpi kpi-navy"><div class="kpi-l">Combined sales</div><div class="kpi-v" style="color:var(--nb)">143.7M</div><div class="kpi-s">IBLHC 108M + TSCL 35M</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--nb)"></div></div></div>
+    <div class="kpi kpi-navy"><div class="kpi-l">Combined sales</div><div class="kpi-v" id="sd-combined-v" style="color:var(--nb)">143.7M</div><div class="kpi-s" id="sd-combined-s">IBLHC 108M + TSCL 35M</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--nb)"></div></div></div>
     <div class="kpi kpi-green"><div class="kpi-l">Contracts won</div><div class="kpi-v" id="ov-won" style="color:var(--green)">—</div><div class="kpi-s" id="ov-won-s">Loading...</div><div class="kpi-bar"><div class="kpi-bar-fill" id="ov-won-bar" style="background:var(--green)"></div></div></div>
     <div class="kpi kpi-blue"><div class="kpi-l">Contract portfolio</div><div class="kpi-v" id="ov-cval" style="color:var(--blue)">—</div><div class="kpi-s">Total awarded PKR</div><div class="kpi-bar"><div class="kpi-bar-fill" id="ov-cval-bar" style="background:var(--blue)"></div></div></div>
     <div class="kpi kpi-red"><div class="kpi-l">Supply pending</div><div class="kpi-v" id="ov-pend" style="color:var(--red)">—</div><div class="kpi-s" id="ov-pend-s">Loading...</div><div class="kpi-bar"><div class="kpi-bar-fill" id="ov-pend-bar" style="background:var(--red)"></div></div></div>
-    <div class="kpi kpi-amber"><div class="kpi-l">Receivables outstanding</div><div class="kpi-v" style="color:var(--amber)">1.04B</div><div class="kpi-s">AR aging snapshot</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:74%;background:var(--amber)"></div></div></div>
-    <div class="kpi kpi-teal"><div class="kpi-l">LC/BC issued</div><div class="kpi-v" style="color:var(--teal)">247</div><div class="kpi-s">TSCL 103 · IBLHC 144</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:95%;background:var(--teal)"></div></div></div>
+    <div class="kpi kpi-amber"><div class="kpi-l">Receivables outstanding</div><div class="kpi-v" id="sd-ar-total-v" style="color:var(--amber)">1.04B</div><div class="kpi-s">AR aging snapshot</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:74%;background:var(--amber)"></div></div></div>
+    <div class="kpi kpi-teal"><div class="kpi-l">LC/BC issued</div><div class="kpi-v" id="sd-lcbc-total-v" style="color:var(--teal)">247</div><div class="kpi-s" id="sd-lcbc-total-s">TSCL 103 · IBLHC 144</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:95%;background:var(--teal)"></div></div></div>
   </div>
 
   <!-- CAROUSEL -->
@@ -279,13 +313,13 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
     <div class="carousel-track" id="ctrack">
       <div class="carousel-slide">
         <div class="slide-eyebrow"><span>01 / 05</span><div class="slide-eyebrow-line"></div><span>Sales performance</span></div>
-        <div class="slide-big" style="color:var(--nb)">144M</div>
+        <div class="slide-big" id="sd-sl1-big" style="color:var(--nb)">144M</div>
         <div class="slide-sub">Combined IBLHC + TSCL net sales · FY 2026–27 (PKR)</div>
         <div class="slide-grid">
-          <div class="slide-item"><div class="slide-item-l">IBLHC total</div><div class="slide-item-v" style="color:var(--blue)">108M</div><div class="slide-item-s">BL: CC 74M · HC 30M · MDD 4M</div></div>
-          <div class="slide-item"><div class="slide-item-l">TSCL total</div><div class="slide-item-v" style="color:var(--nb3)">35M</div><div class="slide-item-s">HC 23M · CC 12M</div></div>
-          <div class="slide-item"><div class="slide-item-l">IBLHC by BL division</div><div class="slide-item-s" style="margin-top:6px;font-size:11px;line-height:2;color:var(--text2)">CC: <strong>74M</strong> &nbsp; MDD: <strong>4M</strong> &nbsp; HC: <strong>30M</strong></div></div>
-          <div class="slide-item"><div class="slide-item-l">TSCL by BL division</div><div class="slide-item-s" style="margin-top:6px;font-size:11px;line-height:2;color:var(--text2)">HC: <strong>23M</strong> &nbsp; CC: <strong>12M</strong></div></div>
+          <div class="slide-item"><div class="slide-item-l">IBLHC total</div><div class="slide-item-v" id="sd-sl1-iblhc" style="color:var(--blue)">108M</div><div class="slide-item-s" id="sd-sl1-iblhc-s">BL: CC 74M · HC 30M · MDD 4M</div></div>
+          <div class="slide-item"><div class="slide-item-l">TSCL total</div><div class="slide-item-v" id="sd-sl1-tscl" style="color:var(--nb3)">35M</div><div class="slide-item-s" id="sd-sl1-tscl-s">HC 23M · CC 12M</div></div>
+          <div class="slide-item"><div class="slide-item-l">IBLHC by BL division</div><div class="slide-item-s" style="margin-top:6px;font-size:11px;line-height:2;color:var(--text2)"><span id="sd-sl1-iblhc-bl">CC: <strong>74M</strong> &nbsp; MDD: <strong>4M</strong> &nbsp; HC: <strong>30M</strong></span></div></div>
+          <div class="slide-item"><div class="slide-item-l">TSCL by BL division</div><div class="slide-item-s" style="margin-top:6px;font-size:11px;line-height:2;color:var(--text2)"><span id="sd-sl1-tscl-bl">HC: <strong>23M</strong> &nbsp; CC: <strong>12M</strong></span></div></div>
         </div>
       </div>
       <div class="carousel-slide">
@@ -301,13 +335,13 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
       </div>
       <div class="carousel-slide">
         <div class="slide-eyebrow"><span>03 / 05</span><div class="slide-eyebrow-line"></div><span>Payment status</span></div>
-        <div class="slide-big" style="color:var(--amber)">1.04B</div>
+        <div class="slide-big" id="sd-sl3-big" style="color:var(--amber)">1.04B</div>
         <div class="slide-sub">Total outstanding receivables — IBLHC + TSCL aging snapshot (PKR)</div>
         <div class="slide-grid">
-          <div class="slide-item"><div class="slide-item-l">IBLHC outstanding</div><div class="slide-item-v" style="color:var(--nb)">847M</div><div class="slide-item-s">82% of total AR</div></div>
-          <div class="slide-item"><div class="slide-item-l">TSCL outstanding</div><div class="slide-item-v" style="color:var(--green)">191M</div><div class="slide-item-s">18% of total AR</div></div>
-          <div class="slide-item"><div class="slide-item-l">Overdue 6+ months</div><div class="slide-item-v" style="color:var(--red)">590M</div><div class="slide-item-s">57% of AR · high risk</div></div>
-          <div class="slide-item"><div class="slide-item-l">Current (0–90d)</div><div class="slide-item-v" style="color:var(--amber)">240M</div><div class="slide-item-s">23% of AR · current</div></div>
+          <div class="slide-item"><div class="slide-item-l">IBLHC outstanding</div><div class="slide-item-v" id="sd-sl3-iblhc" style="color:var(--nb)">847M</div><div class="slide-item-s" id="sd-sl3-iblhc-s">82% of total AR</div></div>
+          <div class="slide-item"><div class="slide-item-l">TSCL outstanding</div><div class="slide-item-v" id="sd-sl3-tscl" style="color:var(--green)">191M</div><div class="slide-item-s" id="sd-sl3-tscl-s">18% of total AR</div></div>
+          <div class="slide-item"><div class="slide-item-l">Overdue 6+ months</div><div class="slide-item-v" id="sd-sl3-od6" style="color:var(--red)">590M</div><div class="slide-item-s" id="sd-sl3-od6-s">57% of AR · high risk</div></div>
+          <div class="slide-item"><div class="slide-item-l">Current (0–90d)</div><div class="slide-item-v" id="sd-sl3-cur" style="color:var(--amber)">240M</div><div class="slide-item-s" id="sd-sl3-cur-s">23% of AR · current</div></div>
         </div>
       </div>
       <div class="carousel-slide">
@@ -399,9 +433,9 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
     <div class="section-hdr"><div class="section-dot" style="background:var(--red)"></div>Procurement bottlenecks — where the cycle is breaking right now</div>
     <div class="gap-banner-grid" id="gap-banner-grid">
       <div class="gap-banner gap-red"><div class="gap-b-num" id="gb1">—</div><div class="gap-b-label">Supply not delivered<br><span>PO issued · goods awaited</span></div><div class="gap-b-tag" style="background:var(--red-lt);color:var(--red)">Critical</div></div>
-      <div class="gap-banner gap-red"><div class="gap-b-num">590M</div><div class="gap-b-label">Overdue 6+ months<br><span>of PKR 1.04B total AR</span></div><div class="gap-b-tag" style="background:var(--red-lt);color:var(--red)">Critical</div></div>
+      <div class="gap-banner gap-red"><div class="gap-b-num" id="sd-gb-ar-v">590M</div><div class="gap-b-label">Overdue 6+ months<br><span id="sd-gb-ar-s">of PKR 1.04B total AR</span></div><div class="gap-b-tag" style="background:var(--red-lt);color:var(--red)">Critical</div></div>
       <div class="gap-banner gap-amber"><div class="gap-b-num" id="gb3">—</div><div class="gap-b-label">No PO after contract win<br><span>SC yet to action</span></div><div class="gap-b-tag" style="background:var(--amber-lt);color:var(--amber)">High</div></div>
-      <div class="gap-banner gap-amber"><div class="gap-b-num">13</div><div class="gap-b-label">LC/BC not established<br><span>TSCL 3 · IBLHC 10</span></div><div class="gap-b-tag" style="background:var(--amber-lt);color:var(--amber)">High</div></div>
+      <div class="gap-banner gap-amber"><div class="gap-b-num" id="sd-gb-lcbc-v">13</div><div class="gap-b-label">LC/BC not established<br><span id="sd-gb-lcbc-s">TSCL 3 · IBLHC 10</span></div><div class="gap-b-tag" style="background:var(--amber-lt);color:var(--amber)">High</div></div>
       <div class="gap-banner gap-blue"><div class="gap-b-num" id="gb5">—</div><div class="gap-b-label">DTL testing pending<br><span>Lab clearance awaited</span></div><div class="gap-b-tag" style="background:var(--blue-lt);color:var(--blue)">Medium</div></div>
       <div class="gap-banner gap-gray"><div class="gap-b-num" id="gb6">—</div><div class="gap-b-label">Tenders not finalized<br><span>Awaiting award decision</span></div><div class="gap-b-tag" style="background:var(--lb);color:var(--text3)">Monitor</div></div>
     </div>
@@ -438,23 +472,23 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
 <!-- TAB 2: SALES -->
 <div class="panel" id="tab2">
   <div class="two-col" style="margin-bottom:14px">
-    <div class="kpi kpi-navy"><div class="kpi-l">IBLHC net sales</div><div class="kpi-v" style="color:var(--nb)">108M</div><div class="kpi-s">281 billing lines · FY 26-27</div></div>
-    <div class="kpi kpi-blue"><div class="kpi-l">TSCL net sales</div><div class="kpi-v" style="color:var(--blue)">35M</div><div class="kpi-s">11 billing lines · FY 26-27</div></div>
+    <div class="kpi kpi-navy"><div class="kpi-l">IBLHC net sales</div><div class="kpi-v" id="sd-t2-iblhc-v" style="color:var(--nb)">108M</div><div class="kpi-s" id="sd-t2-iblhc-s">281 billing lines · FY 26-27</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-l">TSCL net sales</div><div class="kpi-v" id="sd-t2-tscl-v" style="color:var(--blue)">35M</div><div class="kpi-s" id="sd-t2-tscl-s">11 billing lines · FY 26-27</div></div>
   </div>
   <div class="card" style="margin-bottom:14px">
     <div class="section-hdr"><div class="section-dot"></div>IBLHC sales by BL division</div>
     <div class="legend-row">
-      <span class="legend-item"><span class="legend-sq" style="background:#0f2d52"></span>CC 74M</span>
-      <span class="legend-item"><span class="legend-sq" style="background:#1d4ed8"></span>HC 30M</span>
-      <span class="legend-item"><span class="legend-sq" style="background:#60a5fa"></span>MDD 4M</span>
+      <span class="legend-item"><span class="legend-sq" style="background:#0f2d52"></span><span id="sd-leg-cc">CC 74M</span></span>
+      <span class="legend-item"><span class="legend-sq" style="background:#1d4ed8"></span><span id="sd-leg-hc">HC 30M</span></span>
+      <span class="legend-item"><span class="legend-sq" style="background:#60a5fa"></span><span id="sd-leg-mdd">MDD 4M</span></span>
     </div>
     <div class="chart-wrap" style="height:200px"><canvas id="c1" role="img" aria-label="IBLHC sales by division bar chart">CC 74M, HC 30M, MDD 4M</canvas></div>
   </div>
   <div class="card">
     <div class="section-hdr"><div class="section-dot"></div>IBLHC vs TSCL — entity comparison</div>
     <div class="legend-row">
-      <span class="legend-item"><span class="legend-sq" style="background:#0f2d52"></span>IBLHC 108M</span>
-      <span class="legend-item"><span class="legend-sq" style="background:#7c3aed"></span>TSCL 35M</span>
+      <span class="legend-item"><span class="legend-sq" style="background:#0f2d52"></span><span id="sd-leg-iblhc">IBLHC 108M</span></span>
+      <span class="legend-item"><span class="legend-sq" style="background:#7c3aed"></span><span id="sd-leg-tscl">TSCL 35M</span></span>
       
     </div>
     <div class="chart-wrap" style="height:200px"><canvas id="c2" role="img" aria-label="Sales channel comparison bar chart">IBLHC 108M, TSCL 35M</canvas></div>
@@ -464,9 +498,9 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
 <!-- TAB 3: PAYMENTS -->
 <div class="panel" id="tab3">
   <div class="three-kpi">
-    <div class="kpi kpi-navy"><div class="kpi-l">IBLHC outstanding</div><div class="kpi-v" style="color:var(--nb)">847M</div><div class="kpi-s">82% of total AR</div></div>
-    <div class="kpi kpi-blue"><div class="kpi-l">TSCL outstanding</div><div class="kpi-v" style="color:var(--blue)">191M</div><div class="kpi-s">18% of total AR</div></div>
-    <div class="kpi kpi-red"><div class="kpi-l">Total outstanding</div><div class="kpi-v" style="color:var(--red)">1.04B</div><div class="kpi-s">Combined AR aging snapshot</div></div>
+    <div class="kpi kpi-navy"><div class="kpi-l">IBLHC outstanding</div><div class="kpi-v" id="sd-t3-iblhc-v" style="color:var(--nb)">847M</div><div class="kpi-s" id="sd-t3-iblhc-s">82% of total AR</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-l">TSCL outstanding</div><div class="kpi-v" id="sd-t3-tscl-v" style="color:var(--blue)">191M</div><div class="kpi-s" id="sd-t3-tscl-s">18% of total AR</div></div>
+    <div class="kpi kpi-red"><div class="kpi-l">Total outstanding</div><div class="kpi-v" id="sd-t3-total-v" style="color:var(--red)">1.04B</div><div class="kpi-s">Combined AR aging snapshot</div></div>
   </div>
   <div class="two-col">
     <div class="card">
@@ -480,9 +514,9 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
       <div style="margin-top:12px;padding:10px 12px;background:var(--lb);border-radius:8px;border:1px solid var(--lb3)">
         <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:4px">AGING SUMMARY</div>
         <div style="font-size:12px;color:var(--text2);line-height:1.9">
-          Current (0–90d): <strong style="color:var(--green)">PKR 240M</strong> · 23% &nbsp;·&nbsp;
-          Watch (3–6mo): <strong style="color:var(--amber)">PKR 207M</strong> · 20%<br>
-          Critical (6mo+): <strong style="color:var(--red)">PKR 590M</strong> · 57% — highest risk
+          Current (0–90d): <strong id="sd-aging-cur" style="color:var(--green)">PKR 240M</strong> · <span id="sd-aging-cur-pct">23%</span> &nbsp;·&nbsp;
+          Watch (3–6mo): <strong id="sd-aging-watch" style="color:var(--amber)">PKR 207M</strong> · <span id="sd-aging-watch-pct">20%</span><br>
+          Critical (6mo+): <strong id="sd-aging-crit" style="color:var(--red)">PKR 590M</strong> · <span id="sd-aging-crit-pct">57%</span> — highest risk
         </div>
       </div>
     </div>
@@ -492,25 +526,25 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
         <table>
           <thead><tr><th>Entity</th><th>Business line</th><th class="r">Outstanding PKR</th></tr></thead>
           <tbody>
-            <tr><td style="font-size:11px;font-weight:500">IBLHC</td><td style="font-size:11px">Critical Care</td><td class="r">355,000,000</td></tr>
-            <tr><td style="font-size:11px;font-weight:500">IBLHC</td><td style="font-size:11px">Medical Disposables</td><td class="r">468,000,000</td></tr>
-            <tr><td style="font-size:11px;font-weight:500">IBLHC</td><td style="font-size:11px">HospiCare</td><td class="r">25,000,000</td></tr>
-            <tr><td style="font-size:11px;font-weight:500">TSCL</td><td style="font-size:11px">HospiCare</td><td class="r">130,000,000</td></tr>
-            <tr><td style="font-size:11px;font-weight:500">TSCL</td><td style="font-size:11px">Critical Care</td><td class="r">61,000,000</td></tr>
-            <tr class="tbl-total"><td colspan="2">Total outstanding</td><td class="r">1,038,000,000</td></tr>
+            <tr><td style="font-size:11px;font-weight:500">IBLHC</td><td style="font-size:11px">Critical Care</td><td class="r" id="sd-ar-iblhc-cc">355,000,000</td></tr>
+            <tr><td style="font-size:11px;font-weight:500">IBLHC</td><td style="font-size:11px">Medical Disposables</td><td class="r" id="sd-ar-iblhc-mdd">468,000,000</td></tr>
+            <tr><td style="font-size:11px;font-weight:500">IBLHC</td><td style="font-size:11px">HospiCare</td><td class="r" id="sd-ar-iblhc-hc">25,000,000</td></tr>
+            <tr><td style="font-size:11px;font-weight:500">TSCL</td><td style="font-size:11px">HospiCare</td><td class="r" id="sd-ar-tscl-hc">130,000,000</td></tr>
+            <tr><td style="font-size:11px;font-weight:500">TSCL</td><td style="font-size:11px">Critical Care</td><td class="r" id="sd-ar-tscl-cc">61,000,000</td></tr>
+            <tr class="tbl-total"><td colspan="2">Total outstanding</td><td class="r" id="sd-ar-total-tbl">1,038,000,000</td></tr>
           </tbody>
         </table>
       </div>
       <div style="margin-top:14px">
         <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-weight:600;letter-spacing:.5px">PAYMENT AGING RISK</div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:3px">Current (0–90 days)
-          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:23%;background:var(--green)"></div></div><span class="prog-val" style="color:var(--green)">23%</span></div>
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" id="sd-pb-cur" style="width:23%;background:var(--green)"></div></div><span class="prog-val" id="sd-pb-cur-v" style="color:var(--green)">23%</span></div>
         </div>
         <div style="font-size:11px;color:var(--text2);margin-bottom:3px">Watch (3–6 months)
-          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:20%;background:var(--amber)"></div></div><span class="prog-val" style="color:var(--amber)">20%</span></div>
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" id="sd-pb-watch" style="width:20%;background:var(--amber)"></div></div><span class="prog-val" id="sd-pb-watch-v" style="color:var(--amber)">20%</span></div>
         </div>
         <div style="font-size:11px;color:var(--text2)">Critical (6+ months)
-          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" style="width:57%;background:var(--red)"></div></div><span class="prog-val" style="color:var(--red)">57%</span></div>
+          <div class="prog-row"><div class="prog-bar-wrap"><div class="prog-bar-fill" id="sd-pb-crit" style="width:57%;background:var(--red)"></div></div><span class="prog-val" id="sd-pb-crit-v" style="color:var(--red)">57%</span></div>
         </div>
       </div>
     </div>
@@ -520,10 +554,10 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
 <!-- TAB 4: PO / LC-BC -->
 <div class="panel" id="tab4">
   <div class="four-kpi">
-    <div class="kpi kpi-navy"><div class="kpi-l">TSCL PO records</div><div class="kpi-v">106</div><div class="kpi-s">Total purchase orders</div></div>
-    <div class="kpi kpi-green"><div class="kpi-l">TSCL LC/BC issued</div><div class="kpi-v" style="color:var(--green)">103</div><div class="kpi-s">97% coverage rate</div></div>
-    <div class="kpi kpi-blue"><div class="kpi-l">IBLHC PO records</div><div class="kpi-v">154</div><div class="kpi-s">Total purchase orders</div></div>
-    <div class="kpi kpi-teal"><div class="kpi-l">IBLHC LC/BC issued</div><div class="kpi-v" style="color:var(--teal)">144</div><div class="kpi-s">94% coverage rate</div></div>
+    <div class="kpi kpi-navy"><div class="kpi-l">TSCL PO records</div><div class="kpi-v" id="sd-t4-po-tscl">106</div><div class="kpi-s">Total purchase orders</div></div>
+    <div class="kpi kpi-green"><div class="kpi-l">TSCL LC/BC issued</div><div class="kpi-v" id="sd-t4-lcbc-tscl" style="color:var(--green)">103</div><div class="kpi-s" id="sd-t4-lcbc-tscl-s">97% coverage rate</div></div>
+    <div class="kpi kpi-blue"><div class="kpi-l">IBLHC PO records</div><div class="kpi-v" id="sd-t4-po-iblhc">154</div><div class="kpi-s">Total purchase orders</div></div>
+    <div class="kpi kpi-teal"><div class="kpi-l">IBLHC LC/BC issued</div><div class="kpi-v" id="sd-t4-lcbc-iblhc" style="color:var(--teal)">144</div><div class="kpi-s" id="sd-t4-lcbc-iblhc-s">94% coverage rate</div></div>
   </div>
   <div class="two-col" style="margin-bottom:14px">
     <div class="card">
@@ -537,17 +571,17 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
     <div class="card">
       <div class="section-hdr"><div class="section-dot"></div>LC/BC coverage progress</div>
       <div style="margin-bottom:16px">
-        <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">TSCL — 103 of 106 issued</div>
-        <div class="prog-row"><div class="prog-bar-wrap" style="height:10px;border-radius:5px"><div class="prog-bar-fill" style="width:97%;background:var(--green);height:100%;border-radius:5px"></div></div><span class="prog-val" style="color:var(--green);font-size:14px">97%</span></div>
+        <div id="sd-t4-tscl-prog-lbl" style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">TSCL — 103 of 106 issued</div>
+        <div class="prog-row"><div class="prog-bar-wrap" style="height:10px;border-radius:5px"><div id="sd-t4-tscl-bar" class="prog-bar-fill" style="width:97%;background:var(--green);height:100%;border-radius:5px"></div></div><span class="prog-val" id="sd-t4-tscl-pct" style="color:var(--green);font-size:14px">97%</span></div>
       </div>
       <div style="margin-bottom:16px">
-        <div style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">IBLHC — 144 of 154 issued</div>
-        <div class="prog-row"><div class="prog-bar-wrap" style="height:10px;border-radius:5px"><div class="prog-bar-fill" style="width:94%;background:var(--teal);height:100%;border-radius:5px"></div></div><span class="prog-val" style="color:var(--teal);font-size:14px">94%</span></div>
+        <div id="sd-t4-iblhc-prog-lbl" style="font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500">IBLHC — 144 of 154 issued</div>
+        <div class="prog-row"><div class="prog-bar-wrap" style="height:10px;border-radius:5px"><div id="sd-t4-iblhc-bar" class="prog-bar-fill" style="width:94%;background:var(--teal);height:100%;border-radius:5px"></div></div><span class="prog-val" id="sd-t4-iblhc-pct" style="color:var(--teal);font-size:14px">94%</span></div>
       </div>
       <div style="padding:12px 14px;background:var(--lb);border-radius:8px;border:1px solid var(--lb3)">
         <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:4px">COMBINED LC/BC RATE</div>
-        <div style="font-size:28px;font-weight:500;color:var(--nb);letter-spacing:-1px">95%</div>
-        <div style="font-size:11px;color:var(--text3)">247 of 260 total POs covered</div>
+        <div id="sd-t4-combined-pct" style="font-size:28px;font-weight:500;color:var(--nb);letter-spacing:-1px">95%</div>
+        <div id="sd-t4-combined-lbl" style="font-size:11px;color:var(--text3)">247 of 260 total POs covered</div>
       </div>
     </div>
   </div>
@@ -591,9 +625,9 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
   <!-- TOP SEVERITY CARDS -->
   <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr))">
     <div class="kpi kpi-red"><div class="kpi-l">Supply not delivered</div><div class="kpi-v" id="g-supp" style="color:var(--red)">—</div><div class="kpi-s">POs issued, goods pending</div><div class="kpi-bar"><div class="kpi-bar-fill" id="g-supp-bar" style="background:var(--red)"></div></div></div>
-    <div class="kpi kpi-red"><div class="kpi-l">Payments overdue 6mo+</div><div class="kpi-v" style="color:var(--red)">590M</div><div class="kpi-s">of PKR 1.04B total outstanding</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:33%;background:var(--red)"></div></div></div>
+    <div class="kpi kpi-red"><div class="kpi-l">Payments overdue 6mo+</div><div class="kpi-v" id="sd-gap-od6-v" style="color:var(--red)">590M</div><div class="kpi-s" id="sd-gap-od6-s">of PKR 1.04B total outstanding</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:33%;background:var(--red)"></div></div></div>
     <div class="kpi kpi-amber"><div class="kpi-l">No PO after award</div><div class="kpi-v" id="g-po" style="color:var(--amber)">—</div><div class="kpi-s">SC action pending</div><div class="kpi-bar"><div class="kpi-bar-fill" id="g-po-bar" style="background:var(--amber)"></div></div></div>
-    <div class="kpi kpi-amber"><div class="kpi-l">LC/BC not issued</div><div class="kpi-v" style="color:var(--amber)">13</div><div class="kpi-s">TSCL 3 · IBLHC 10</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:6%;background:var(--amber)"></div></div></div>
+    <div class="kpi kpi-amber"><div class="kpi-l">LC/BC not issued</div><div class="kpi-v" id="sd-gap-lcbc-v" style="color:var(--amber)">13</div><div class="kpi-s" id="sd-gap-lcbc-s">TSCL 3 · IBLHC 10</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:6%;background:var(--amber)"></div></div></div>
     <div class="kpi kpi-blue"><div class="kpi-l">DTL testing pending</div><div class="kpi-v" id="g-dtl" style="color:var(--blue)">—</div><div class="kpi-s">Quality gate awaited</div><div class="kpi-bar"><div class="kpi-bar-fill" id="g-dtl-bar" style="background:var(--blue)"></div></div></div>
     <div class="kpi kpi-navy"><div class="kpi-l">Total open gaps</div><div class="kpi-v" id="g-total" style="color:var(--nb)">—</div><div class="kpi-s">Across all gap types</div><div class="kpi-bar"><div class="kpi-bar-fill" id="g-total-bar" style="background:var(--nb)"></div></div></div>
   </div>
@@ -615,11 +649,11 @@ tr.tbl-total td{background:var(--lb);font-weight:600;color:var(--nb);border-top:
         <div class="proc-label">POs<br>generated</div>
       </div>
       <div class="proc-connector">
-        <div class="proc-gap-pill" style="background:var(--amber-lt);color:var(--amber)">27 no LC/BC</div>
+        <div class="proc-gap-pill" id="sd-pf-nolcbc" style="background:var(--amber-lt);color:var(--amber)">27 no LC/BC</div>
         <div class="proc-arrow">→</div>
       </div>
       <div class="proc-stage">
-        <div class="proc-num" style="border-color:var(--teal);color:var(--teal)">180</div>
+        <div class="proc-num" id="sd-pf-lcbc" style="border-color:var(--teal);color:var(--teal)">180</div>
         <div class="proc-label">LC/BC<br>issued</div>
       </div>
       <div class="proc-connector">
@@ -1029,14 +1063,438 @@ function filterTable(){
 }
 
 // ── CHARTS ────────────────────────────────────────────────────────────────────
+
+// ── STATIC DATA ───────────────────────────────────────────────────────────────
+/*STATIC_BEGIN*/
+let SD = {
+  iblhc_m:108, tscl_m:35,
+  iblhc_cc_m:74, iblhc_hc_m:30, iblhc_mdd_m:4,
+  tscl_hc_m:23, tscl_cc_m:12,
+  iblhc_lines:281, tscl_lines:11,
+  ar_iblhc_m:847, ar_tscl_m:191,
+  ar_0_30_m:72, ar_31_60_m:81, ar_61_90_m:86,
+  ar_3_6_m:207, ar_6_12_m:317, ar_12_m:228, ar_24_m:46,
+  lcbc_tscl:103, lcbc_iblhc:144,
+  lcbc_tscl_pend:3, lcbc_iblhc_pend:10,
+  po_tscl:106, po_iblhc:154,
+  iblhc_cc_ar:355000000, iblhc_mdd_ar:468000000, iblhc_hc_ar:25000000,
+  tscl_hc_ar:130000000, tscl_cc_ar:61000000,
+};
+/*STATIC_END*/
+
+function setText(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+function setHTML(id,v){const el=document.getElementById(id);if(el)el.innerHTML=v;}
+function setWidth(id,w){const el=document.getElementById(id);if(el)el.style.width=w+'%';}
+function fmtM(n){return n>=1000?(n/1000).toFixed(2).replace(/\.0+$/,'')+'B':n+'M';}
+
+function applyStatics(sd){
+  const tot_m = sd.iblhc_m + sd.tscl_m;
+  const ar_tot_m = sd.ar_iblhc_m + sd.ar_tscl_m;
+  const od6_m = sd.ar_6_12_m + sd.ar_12_m + sd.ar_24_m;
+  const cur_m = sd.ar_0_30_m + sd.ar_31_60_m + sd.ar_61_90_m;
+  const watch_m = sd.ar_3_6_m;
+  const tot_lcbc = sd.lcbc_tscl + sd.lcbc_iblhc;
+  const tot_po = sd.po_tscl + sd.po_iblhc;
+  const lcbc_pend = sd.lcbc_tscl_pend + sd.lcbc_iblhc_pend;
+
+  const pct_iblhc = Math.round(sd.ar_iblhc_m/ar_tot_m*100);
+  const pct_tscl  = Math.round(sd.ar_tscl_m/ar_tot_m*100);
+  const pct_od6   = Math.round(od6_m/ar_tot_m*100);
+  const pct_cur   = Math.round(cur_m/ar_tot_m*100);
+  const pct_watch = Math.round(watch_m/ar_tot_m*100);
+  const pct_tscl_lcbc = Math.round(sd.lcbc_tscl/sd.po_tscl*100);
+  const pct_iblhc_lcbc= Math.round(sd.lcbc_iblhc/sd.po_iblhc*100);
+  const pct_all_lcbc  = Math.round(tot_lcbc/tot_po*100);
+
+  // Overview KPIs
+  setText('sd-combined-v', fmtM(tot_m));
+  setText('sd-combined-s', 'IBLHC '+sd.iblhc_m+'M + TSCL '+sd.tscl_m+'M');
+  setText('sd-ar-total-v', fmtM(ar_tot_m));
+  setText('sd-lcbc-total-v', tot_lcbc);
+  setText('sd-lcbc-total-s', 'TSCL '+sd.lcbc_tscl+' · IBLHC '+sd.lcbc_iblhc);
+
+  // Sub-header pill
+  setText('ph-sales', 'PKR '+fmtM(tot_m));
+
+  // Gap banners
+  setText('sd-gb-ar-v', od6_m+'M');
+  setText('sd-gb-ar-s', 'of PKR '+fmtM(ar_tot_m)+' total AR');
+  setText('sd-gb-lcbc-v', lcbc_pend);
+  setText('sd-gb-lcbc-s', 'TSCL '+sd.lcbc_tscl_pend+' · IBLHC '+sd.lcbc_iblhc_pend);
+
+  // Carousel slide 1
+  setText('sd-sl1-big', fmtM(tot_m));
+  setText('sd-sl1-iblhc', sd.iblhc_m+'M');
+  setText('sd-sl1-iblhc-s', 'BL: CC '+sd.iblhc_cc_m+'M · HC '+sd.iblhc_hc_m+'M · MDD '+sd.iblhc_mdd_m+'M');
+  setText('sd-sl1-tscl', sd.tscl_m+'M');
+  setText('sd-sl1-tscl-s', 'HC '+sd.tscl_hc_m+'M · CC '+sd.tscl_cc_m+'M');
+  setHTML('sd-sl1-iblhc-bl','CC: <strong>'+sd.iblhc_cc_m+'M</strong> &nbsp; MDD: <strong>'+sd.iblhc_mdd_m+'M</strong> &nbsp; HC: <strong>'+sd.iblhc_hc_m+'M</strong>');
+  setHTML('sd-sl1-tscl-bl','HC: <strong>'+sd.tscl_hc_m+'M</strong> &nbsp; CC: <strong>'+sd.tscl_cc_m+'M</strong>');
+
+  // Carousel slide 3
+  setText('sd-sl3-big', fmtM(ar_tot_m));
+  setText('sd-sl3-iblhc', sd.ar_iblhc_m+'M');
+  setText('sd-sl3-iblhc-s', pct_iblhc+'% of total AR');
+  setText('sd-sl3-tscl', sd.ar_tscl_m+'M');
+  setText('sd-sl3-tscl-s', pct_tscl+'% of total AR');
+  setText('sd-sl3-od6', od6_m+'M');
+  setText('sd-sl3-od6-s', pct_od6+'% of AR · high risk');
+  setText('sd-sl3-cur', cur_m+'M');
+  setText('sd-sl3-cur-s', pct_cur+'% of AR · current');
+
+  // Tab2 Sales
+  setText('sd-t2-iblhc-v', sd.iblhc_m+'M');
+  setText('sd-t2-iblhc-s', sd.iblhc_lines+' billing lines · FY 26-27');
+  setText('sd-t2-tscl-v', sd.tscl_m+'M');
+  setText('sd-t2-tscl-s', sd.tscl_lines+' billing lines · FY 26-27');
+  setText('sd-leg-cc','CC '+sd.iblhc_cc_m+'M');
+  setText('sd-leg-hc','HC '+sd.iblhc_hc_m+'M');
+  setText('sd-leg-mdd','MDD '+sd.iblhc_mdd_m+'M');
+  setText('sd-leg-iblhc','IBLHC '+sd.iblhc_m+'M');
+  setText('sd-leg-tscl','TSCL '+sd.tscl_m+'M');
+
+  // Tab3 Payments
+  setText('sd-t3-iblhc-v', sd.ar_iblhc_m+'M');
+  setText('sd-t3-iblhc-s', pct_iblhc+'% of total AR');
+  setText('sd-t3-tscl-v', sd.ar_tscl_m+'M');
+  setText('sd-t3-tscl-s', pct_tscl+'% of total AR');
+  setText('sd-t3-total-v', fmtM(ar_tot_m));
+  // Aging summary
+  const ar_tot_raw = sd.ar_iblhc_m + sd.ar_tscl_m;
+  setHTML('sd-aging-cur', 'PKR '+cur_m+'M');
+  setText('sd-aging-cur-pct', pct_cur+'%');
+  setHTML('sd-aging-watch', 'PKR '+watch_m+'M');
+  setText('sd-aging-watch-pct', pct_watch+'%');
+  setHTML('sd-aging-crit', 'PKR '+od6_m+'M');
+  setText('sd-aging-crit-pct', pct_od6+'%');
+  // AR table
+  function fmt0(n){return Math.round(n).toLocaleString('en-US');}
+  setText('sd-ar-iblhc-cc', fmt0(sd.iblhc_cc_ar));
+  setText('sd-ar-iblhc-mdd',fmt0(sd.iblhc_mdd_ar));
+  setText('sd-ar-iblhc-hc', fmt0(sd.iblhc_hc_ar));
+  setText('sd-ar-tscl-hc',  fmt0(sd.tscl_hc_ar));
+  setText('sd-ar-tscl-cc',  fmt0(sd.tscl_cc_ar));
+  setText('sd-ar-total-tbl',fmt0(sd.iblhc_cc_ar+sd.iblhc_mdd_ar+sd.iblhc_hc_ar+sd.tscl_hc_ar+sd.tscl_cc_ar));
+  // Progress bars
+  setWidth('sd-pb-cur', pct_cur); setText('sd-pb-cur-v', pct_cur+'%');
+  setWidth('sd-pb-watch',pct_watch); setText('sd-pb-watch-v',pct_watch+'%');
+  setWidth('sd-pb-crit', pct_od6); setText('sd-pb-crit-v',pct_od6+'%');
+
+  // Tab4 PO/LC-BC
+  setText('sd-t4-po-tscl', sd.po_tscl);
+  setText('sd-t4-lcbc-tscl', sd.lcbc_tscl);
+  setText('sd-t4-lcbc-tscl-s', pct_tscl_lcbc+'% coverage rate');
+  setText('sd-t4-po-iblhc', sd.po_iblhc);
+  setText('sd-t4-lcbc-iblhc', sd.lcbc_iblhc);
+  setText('sd-t4-lcbc-iblhc-s', pct_iblhc_lcbc+'% coverage rate');
+  setText('sd-t4-tscl-prog-lbl','TSCL — '+sd.lcbc_tscl+' of '+sd.po_tscl+' issued');
+  setWidth('sd-t4-tscl-bar',pct_tscl_lcbc); setText('sd-t4-tscl-pct',pct_tscl_lcbc+'%');
+  setText('sd-t4-iblhc-prog-lbl','IBLHC — '+sd.lcbc_iblhc+' of '+sd.po_iblhc+' issued');
+  setWidth('sd-t4-iblhc-bar',pct_iblhc_lcbc); setText('sd-t4-iblhc-pct',pct_iblhc_lcbc+'%');
+  setText('sd-t4-combined-pct', pct_all_lcbc+'%');
+  setText('sd-t4-combined-lbl', tot_lcbc+' of '+tot_po+' total POs covered');
+
+  // Gaps tab
+  setText('sd-gap-od6-v', od6_m+'M');
+  setText('sd-gap-od6-s', 'of PKR '+fmtM(ar_tot_m)+' total outstanding');
+  setText('sd-gap-lcbc-v', lcbc_pend);
+  setText('sd-gap-lcbc-s', 'TSCL '+sd.lcbc_tscl_pend+' · IBLHC '+sd.lcbc_iblhc_pend);
+  const lcbc_issued = tot_lcbc;
+  setText('sd-pf-lcbc', lcbc_issued);
+  setText('sd-pf-nolcbc', lcbc_pend+' no LC/BC');
+}
+
+// ── UPLOAD / DOWNLOAD ─────────────────────────────────────────────────────────
+let __rawSource = null;
+(async function cacheSource(){
+  try{
+    const url = location.href.split('?')[0].split('#')[0];
+    __rawSource = await fetch(url+'?_nc='+Date.now()).then(r=>r.text());
+  }catch(e){}
+})();
+
+let __parsedSD = null;
+
+function openUpload(){document.getElementById('upd-overlay').classList.add('open');}
+function closeUpload(){document.getElementById('upd-overlay').classList.remove('open');resetUploadUI();}
+function resetUploadUI(){
+  setStatus('','');
+  document.getElementById('upd-apply').classList.remove('ready');
+  document.getElementById('upd-dl').classList.remove('ready');
+  document.getElementById('upd-file').value='';
+  __parsedSD=null;
+}
+
+function setStatus(type,msg){
+  const el=document.getElementById('upd-status');
+  el.className='upd-status'+(type?' '+type:'');
+  el.textContent=msg;
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('upd-drop').classList.remove('drag-over');
+  const file=e.dataTransfer.files[0];
+  if(file)handleFileSelect(file);
+}
+
+function handleFileSelect(file){
+  if(!file){return;}
+  if(!file.name.match(/\.(xlsx|xls)$/i)){
+    setStatus('err','Please upload an Excel file (.xlsx or .xls)');return;
+  }
+  setStatus('info','Reading '+file.name+'…');
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const parsed=parseExcelWb(wb);
+      __parsedSD=parsed;
+      setStatus('ok','✓ File parsed — '+file.name+'\nReady to apply. Click "Apply to dashboard" or "Save HTML" to deploy.');
+      document.getElementById('upd-apply').classList.add('ready');
+      document.getElementById('upd-dl').classList.add('ready');
+    }catch(err){
+      setStatus('err','Parse error: '+err.message);
+    }
+  };
+  reader.onerror=()=>setStatus('err','Could not read file');
+  reader.readAsArrayBuffer(file);
+}
+
+function sheetName(wb,kws){
+  const kwArr=kws.map(k=>k.toLowerCase().replace(/[^a-z0-9]/g,''));
+  return wb.SheetNames.find(n=>{
+    const nc=n.toLowerCase().replace(/[^a-z0-9]/g,'');
+    return kwArr.every(k=>nc.includes(k));
+  });
+}
+
+function sheetToRows(sheet){
+  const data=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
+  if(!data.length)return{headers:[],rows:[]};
+  return{headers:data[0].map(String),rows:data.slice(1)};
+}
+
+function findColIdx(headers,...kws){
+  const kl=kws.map(k=>k.toLowerCase().replace(/[^a-z0-9]/g,''));
+  return headers.findIndex(h=>{
+    const hc=h.toLowerCase().replace(/[^a-z0-9]/g,'');
+    return kl.every(k=>hc.includes(k));
+  });
+}
+
+function colSum(rows,idx){
+  if(idx<0)return 0;
+  return rows.reduce((s,r)=>{
+    const v=String(r[idx]||'').replace(/[,\s]/g,'');
+    const n=parseFloat(v);
+    return s+(isNaN(n)?0:n);
+  },0);
+}
+
+function parseExcelWb(wb){
+  const sd={...SD};// start from current
+
+  // IBLHC Sales
+  const iSaleName=sheetName(wb,['iblhc','sale'])||sheetName(wb,['iblhc','sales']);
+  if(iSaleName){
+    const {headers,rows}=sheetToRows(wb.Sheets[iSaleName]);
+    const netIdx=findColIdx(headers,'net','sales')||findColIdx(headers,'net','value')||findColIdx(headers,'netsale');
+    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl','division')||findColIdx(headers,'bl');
+    const ccIdx=findColIdx(headers,'cc')||findColIdx(headers,'critical','care');
+    const hcIdx=findColIdx(headers,'hc')||findColIdx(headers,'hospicare');
+    const mddIdx=findColIdx(headers,'mdd')||findColIdx(headers,'medical');
+    const tot=colSum(rows,netIdx);
+    if(tot>0)sd.iblhc_m=Math.round(tot/1e6);
+    sd.iblhc_lines=rows.filter(r=>r.some(c=>String(c).trim())).length;
+    // try to split by BL
+    if(blIdx>=0){
+      let cc=0,hc=0,mdd=0;
+      rows.forEach(r=>{
+        const bl=String(r[blIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[netIdx]||'').replace(/[,\s]/g,''))||0;
+        if(bl.includes('cc')||bl.includes('critical'))cc+=v;
+        else if(bl.includes('hc')||bl.includes('hospi'))hc+=v;
+        else if(bl.includes('mdd')||bl.includes('medical')||bl.includes('disposable'))mdd+=v;
+      });
+      if(cc>0)sd.iblhc_cc_m=Math.round(cc/1e6);
+      if(hc>0)sd.iblhc_hc_m=Math.round(hc/1e6);
+      if(mdd>0)sd.iblhc_mdd_m=Math.round(mdd/1e6);
+    }
+  }
+
+  // TSCL Sales
+  const tSaleName=sheetName(wb,['tscl','sale'])||sheetName(wb,['tscl','sales']);
+  if(tSaleName){
+    const {headers,rows}=sheetToRows(wb.Sheets[tSaleName]);
+    const netIdx=findColIdx(headers,'net','sales')||findColIdx(headers,'net','value')||findColIdx(headers,'netsale');
+    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl','division')||findColIdx(headers,'bl');
+    const tot=colSum(rows,netIdx);
+    if(tot>0)sd.tscl_m=Math.round(tot/1e6);
+    sd.tscl_lines=rows.filter(r=>r.some(c=>String(c).trim())).length;
+    if(blIdx>=0){
+      let cc=0,hc=0;
+      rows.forEach(r=>{
+        const bl=String(r[blIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[netIdx]||'').replace(/[,\s]/g,''))||0;
+        if(bl.includes('cc')||bl.includes('critical'))cc+=v;
+        else if(bl.includes('hc')||bl.includes('hospi'))hc+=v;
+      });
+      if(cc>0)sd.tscl_cc_m=Math.round(cc/1e6);
+      if(hc>0)sd.tscl_hc_m=Math.round(hc/1e6);
+    }
+  }
+
+  // Payment / AR Aging (IBLHC)
+  const payName=sheetName(wb,['payment','detail'])||sheetName(wb,['ar','aging'])||sheetName(wb,['aging']);
+  if(payName){
+    const {headers,rows}=sheetToRows(wb.Sheets[payName]);
+    // Look for aging bucket columns
+    const buckets=[
+      {key:'ar_0_30_m',kws:['030','0to30','0 30','0-30']},
+      {key:'ar_31_60_m',kws:['3160','31to60','31-60','3160']},
+      {key:'ar_61_90_m',kws:['6190','61to90','61-90']},
+      {key:'ar_3_6_m',kws:['3to6','3 6','3-6','3mo6','36mo']},
+      {key:'ar_6_12_m',kws:['6to12','6 12','6-12','612mo']},
+      {key:'ar_12_m',kws:['12mo','12plus','12+','above12','over12','12to24']},
+      {key:'ar_24_m',kws:['24mo','24plus','24+','above24','over24']},
+    ];
+    // Also look for IBLHC/TSCL breakdown rows
+    const entityIdx=findColIdx(headers,'entity')||findColIdx(headers,'company')||findColIdx(headers,'name');
+    const outIdx=findColIdx(headers,'outstanding')||findColIdx(headers,'balance')||findColIdx(headers,'amount');
+    if(outIdx>=0 && entityIdx>=0){
+      let iblhc=0,tscl=0;
+      rows.forEach(r=>{
+        const ent=String(r[entityIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[outIdx]||'').replace(/[,\s]/g,''))||0;
+        if(ent.includes('iblhc'))iblhc+=v;
+        else if(ent.includes('tscl'))tscl+=v;
+      });
+      if(iblhc>0)sd.ar_iblhc_m=Math.round(iblhc/1e6);
+      if(tscl>0)sd.ar_tscl_m=Math.round(tscl/1e6);
+    }
+    // Try aging buckets
+    buckets.forEach(b=>{
+      const idx=headers.findIndex(h=>{
+        const hc=h.toLowerCase().replace(/[^a-z0-9]/g,'');
+        return b.kws.some(k=>hc.includes(k.replace(/[^a-z0-9]/g,'')));
+      });
+      if(idx>=0){
+        const s=colSum(rows,idx);
+        if(s>0)sd[b.key]=Math.round(s/1e6);
+      }
+    });
+  }
+
+  // IBLHC PO Details
+  const iPOName=sheetName(wb,['iblhc','po'])||sheetName(wb,['iblhc','purchase']);
+  if(iPOName){
+    const {headers,rows}=sheetToRows(wb.Sheets[iPOName]);
+    const lcbcIdx=findColIdx(headers,'lc','bc')||findColIdx(headers,'lcbc');
+    const filled=rows.filter(r=>r.some(c=>String(c).trim()));
+    sd.po_iblhc=filled.length;
+    if(lcbcIdx>=0){
+      sd.lcbc_iblhc=filled.filter(r=>['yes','y','1','true'].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
+      sd.lcbc_iblhc_pend=filled.filter(r=>['no','n','0','false',''].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
+    }
+    // Try AR by BL
+    const arIdx=findColIdx(headers,'outstanding')||findColIdx(headers,'ar','amount');
+    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl');
+    if(arIdx>=0 && blIdx>=0){
+      let cc=0,hc=0,mdd=0;
+      filled.forEach(r=>{
+        const bl=String(r[blIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[arIdx]||'').replace(/[,\s]/g,''))||0;
+        if(bl.includes('cc')||bl.includes('critical'))cc+=v;
+        else if(bl.includes('hc')||bl.includes('hospi'))hc+=v;
+        else if(bl.includes('mdd')||bl.includes('disposable'))mdd+=v;
+      });
+      if(cc>0)sd.iblhc_cc_ar=cc;
+      if(hc>0)sd.iblhc_hc_ar=hc;
+      if(mdd>0)sd.iblhc_mdd_ar=mdd;
+    }
+  }
+
+  // TSCL PO Details
+  const tPOName=sheetName(wb,['tscl','po'])||sheetName(wb,['tscl','purchase']);
+  if(tPOName){
+    const {headers,rows}=sheetToRows(wb.Sheets[tPOName]);
+    const lcbcIdx=findColIdx(headers,'lc','bc')||findColIdx(headers,'lcbc');
+    const filled=rows.filter(r=>r.some(c=>String(c).trim()));
+    sd.po_tscl=filled.length;
+    if(lcbcIdx>=0){
+      sd.lcbc_tscl=filled.filter(r=>['yes','y','1','true'].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
+      sd.lcbc_tscl_pend=filled.filter(r=>['no','n','0','false',''].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
+    }
+    const arIdx=findColIdx(headers,'outstanding')||findColIdx(headers,'ar','amount');
+    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl');
+    if(arIdx>=0 && blIdx>=0){
+      let cc=0,hc=0;
+      filled.forEach(r=>{
+        const bl=String(r[blIdx]||'').toLowerCase();
+        const v=parseFloat(String(r[arIdx]||'').replace(/[,\s]/g,''))||0;
+        if(bl.includes('cc')||bl.includes('critical'))cc+=v;
+        else if(bl.includes('hc')||bl.includes('hospi'))hc+=v;
+      });
+      if(cc>0)sd.tscl_cc_ar=cc;
+      if(hc>0)sd.tscl_hc_ar=hc;
+    }
+  }
+
+  return sd;
+}
+
+function applyParsed(){
+  if(!__parsedSD){return;}
+  SD=__parsedSD;
+  applyStatics(SD);
+  destroyCharts();
+  buildCharts();
+  closeUpload();
+}
+
+function genDownloadHTML(newSD){
+  const src=__rawSource||document.documentElement.outerHTML;
+  const B='/*STATIC_BEGIN*/';
+  const E='/*STATIC_END*/';
+  const i1=src.indexOf(B);
+  const i2=src.indexOf(E);
+  if(i1<0||i2<0)return null;
+  const newBlock=B+'\nlet SD = '+JSON.stringify(newSD,null,2)+';\n'+E;
+  return src.slice(0,i1)+newBlock+src.slice(i2+E.length);
+}
+
+function downloadUpdated(){
+  if(!__parsedSD)return;
+  const html=genDownloadHTML(__parsedSD);
+  if(!html){setStatus('err','Source not cached — refresh and try again');return;}
+  const blob=new Blob([html],{type:'text/html'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='msd-dashboard-updated.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── DESTROY CHARTS ────────────────────────────────────────────────────────────
+function destroyCharts(){
+  ['c1','c2','c3','c4'].forEach(id=>{
+    const canvas=document.getElementById(id);
+    if(!canvas)return;
+    const inst=Chart.getChart(canvas);
+    if(inst)inst.destroy();
+  });
+  chartsBuilt=false;
+}
+
 let chartsBuilt=false;
 function buildCharts(){
   if(chartsBuilt)return;chartsBuilt=true;
   const gc=op=>`rgba(15,45,82,${op})`;
-  new Chart(document.getElementById('c1'),{type:'bar',data:{labels:['CC','MDD','HC'],datasets:[{data:[74,4,30],backgroundColor:['#0f2d52','#1d4ed8','#60a5fa'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'M',color:'#64748b'},grid:{color:gc(.06)}},x:{ticks:{color:'#64748b'},grid:{display:false}}}}});
-  new Chart(document.getElementById('c2'),{type:'bar',data:{labels:['IBLHC','TSCL'],datasets:[{data:[108,35],backgroundColor:['#0f2d52','#7c3aed'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'M',color:'#64748b'},grid:{color:gc(.06)}},x:{ticks:{color:'#64748b'},grid:{display:false}}}}});
-  new Chart(document.getElementById('c3'),{type:'bar',data:{labels:['0-30d','31-60d','61-90d','3-6mo','6-12mo','12mo+','24mo+'],datasets:[{data:[72,81,86,207,317,228,46],backgroundColor:['#15803d','#15803d','#15803d','#b45309','#b91c1c','#b91c1c','#b91c1c'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'M',color:'#64748b'},grid:{color:'rgba(15,45,82,.06)'}},x:{ticks:{color:'#64748b',font:{size:9}},grid:{display:false}}}}});
-  new Chart(document.getElementById('c4'),{type:'bar',data:{labels:['TSCL','IBLHC'],datasets:[{label:'Issued',data:[103,144],backgroundColor:'#15803d',borderRadius:4},{label:'Pending',data:[3,10],backgroundColor:'#dbeafe',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{color:'#64748b'},grid:{display:false}},y:{stacked:true,ticks:{color:'#64748b'},grid:{color:gc(.06)}}}}});
+  new Chart(document.getElementById('c1'),{type:'bar',data:{labels:['CC','MDD','HC'],datasets:[{data:[SD.iblhc_cc_m,SD.iblhc_mdd_m,SD.iblhc_hc_m],backgroundColor:['#0f2d52','#1d4ed8','#60a5fa'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'M',color:'#64748b'},grid:{color:gc(.06)}},x:{ticks:{color:'#64748b'},grid:{display:false}}}}});
+  new Chart(document.getElementById('c2'),{type:'bar',data:{labels:['IBLHC','TSCL'],datasets:[{data:[SD.iblhc_m,SD.tscl_m],backgroundColor:['#0f2d52','#7c3aed'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'M',color:'#64748b'},grid:{color:gc(.06)}},x:{ticks:{color:'#64748b'},grid:{display:false}}}}});
+  new Chart(document.getElementById('c3'),{type:'bar',data:{labels:['0-30d','31-60d','61-90d','3-6mo','6-12mo','12mo+','24mo+'],datasets:[{data:[SD.ar_0_30_m,SD.ar_31_60_m,SD.ar_61_90_m,SD.ar_3_6_m,SD.ar_6_12_m,SD.ar_12_m,SD.ar_24_m],backgroundColor:['#15803d','#15803d','#15803d','#b45309','#b91c1c','#b91c1c','#b91c1c'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'M',color:'#64748b'},grid:{color:'rgba(15,45,82,.06)'}},x:{ticks:{color:'#64748b',font:{size:9}},grid:{display:false}}}}});
+  new Chart(document.getElementById('c4'),{type:'bar',data:{labels:['TSCL','IBLHC'],datasets:[{label:'Issued',data:[SD.lcbc_tscl,SD.lcbc_iblhc],backgroundColor:'#15803d',borderRadius:4},{label:'Pending',data:[SD.lcbc_tscl_pend,SD.lcbc_iblhc_pend],backgroundColor:'#dbeafe',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,ticks:{color:'#64748b'},grid:{display:false}},y:{stacked:true,ticks:{color:'#64748b'},grid:{color:gc(.06)}}}}});
 }
 
 // ── LOAD DATA ────────────────────────────────────────────────────────────────
@@ -1057,7 +1515,32 @@ async function loadData(){
   }
 }
 
+applyStatics(SD);
 loadData();
 </script>
+
+<!-- UPLOAD MODAL -->
+<div class="upd-overlay" id="upd-overlay" onclick="if(event.target===this)closeUpload()">
+  <div class="upd-modal">
+    <div class="upd-modal-hdr">
+      <div class="upd-modal-title">↑ Update dashboard data</div>
+      <button class="upd-close" onclick="closeUpload()">×</button>
+    </div>
+    <div class="upd-drop" id="upd-drop" onclick="document.getElementById('upd-file').click()"
+         ondragover="event.preventDefault();this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')"
+         ondrop="handleDrop(event)">
+      <div class="upd-drop-icon">📊</div>
+      <div class="upd-drop-txt">Drop your Excel file here, or click to browse</div>
+      <div class="upd-drop-sub">Accepts .xlsx · IBLHC Sales, TSCL Sales, Payment Details, PO Details sheets</div>
+    </div>
+    <input type="file" id="upd-file" class="upd-file-input" accept=".xlsx,.xls" onchange="handleFileSelect(this.files[0])">
+    <div class="upd-status" id="upd-status"></div>
+    <div class="upd-actions">
+      <button class="upd-btn-dl" id="upd-dl" onclick="downloadUpdated()">⬇ Save HTML</button>
+      <button class="upd-btn-apply" id="upd-apply" onclick="applyParsed()">Apply to dashboard</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
