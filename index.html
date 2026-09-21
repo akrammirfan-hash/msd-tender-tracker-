@@ -1067,18 +1067,18 @@ function filterTable(){
 // ── STATIC DATA ───────────────────────────────────────────────────────────────
 /*STATIC_BEGIN*/
 let SD = {
-  iblhc_m:108, tscl_m:35,
-  iblhc_cc_m:74, iblhc_hc_m:30, iblhc_mdd_m:4,
-  tscl_hc_m:23, tscl_cc_m:12,
-  iblhc_lines:281, tscl_lines:11,
-  ar_iblhc_m:847, ar_tscl_m:191,
-  ar_0_30_m:72, ar_31_60_m:81, ar_61_90_m:86,
-  ar_3_6_m:207, ar_6_12_m:317, ar_12_m:228, ar_24_m:46,
-  lcbc_tscl:103, lcbc_iblhc:144,
-  lcbc_tscl_pend:3, lcbc_iblhc_pend:10,
-  po_tscl:106, po_iblhc:154,
-  iblhc_cc_ar:355000000, iblhc_mdd_ar:468000000, iblhc_hc_ar:25000000,
-  tscl_hc_ar:130000000, tscl_cc_ar:61000000,
+  iblhc_m:193, tscl_m:22,
+  iblhc_cc_m:102, iblhc_hc_m:58, iblhc_mdd_m:33,
+  tscl_hc_m:10, tscl_cc_m:12,
+  iblhc_lines:522, tscl_lines:9,
+  ar_iblhc_m:833, ar_tscl_m:201,
+  ar_0_30_m:60, ar_31_60_m:57, ar_61_90_m:70,
+  ar_3_6_m:179, ar_6_12_m:389, ar_12_m:236, ar_24_m:44,
+  lcbc_tscl:14, lcbc_iblhc:42,
+  lcbc_tscl_pend:1, lcbc_iblhc_pend:5,
+  po_tscl:15, po_iblhc:47,
+  iblhc_cc_ar:349430778, iblhc_mdd_ar:449942720, iblhc_hc_ar:33378108,
+  tscl_hc_ar:140154853, tscl_cc_ar:60794885,
 };
 /*STATIC_END*/
 
@@ -1097,14 +1097,14 @@ function applyStatics(sd){
   const tot_po = sd.po_tscl + sd.po_iblhc;
   const lcbc_pend = sd.lcbc_tscl_pend + sd.lcbc_iblhc_pend;
 
-  const pct_iblhc = Math.round(sd.ar_iblhc_m/ar_tot_m*100);
-  const pct_tscl  = Math.round(sd.ar_tscl_m/ar_tot_m*100);
-  const pct_od6   = Math.round(od6_m/ar_tot_m*100);
-  const pct_cur   = Math.round(cur_m/ar_tot_m*100);
-  const pct_watch = Math.round(watch_m/ar_tot_m*100);
-  const pct_tscl_lcbc = Math.round(sd.lcbc_tscl/sd.po_tscl*100);
-  const pct_iblhc_lcbc= Math.round(sd.lcbc_iblhc/sd.po_iblhc*100);
-  const pct_all_lcbc  = Math.round(tot_lcbc/tot_po*100);
+  const pct_iblhc = ar_tot_m ? Math.round(sd.ar_iblhc_m/ar_tot_m*100) : 0;
+  const pct_tscl  = ar_tot_m ? Math.round(sd.ar_tscl_m/ar_tot_m*100)  : 0;
+  const pct_od6   = ar_tot_m ? Math.round(od6_m/ar_tot_m*100)          : 0;
+  const pct_cur   = ar_tot_m ? Math.round(cur_m/ar_tot_m*100)          : 0;
+  const pct_watch = ar_tot_m ? Math.round(watch_m/ar_tot_m*100)        : 0;
+  const pct_tscl_lcbc = sd.po_tscl  ? Math.round(sd.lcbc_tscl/sd.po_tscl*100)   : 0;
+  const pct_iblhc_lcbc= sd.po_iblhc ? Math.round(sd.lcbc_iblhc/sd.po_iblhc*100) : 0;
+  const pct_all_lcbc  = tot_po      ? Math.round(tot_lcbc/tot_po*100)            : 0;
 
   // Overview KPIs
   setText('sd-combined-v', fmtM(tot_m));
@@ -1263,10 +1263,12 @@ function handleFileSelect(file){
       const wb=XLSX.read(ev.target.result,{type:'array'});
       const sheets=wb.SheetNames;
       // Map each role to the matched sheet name
+      // IMPORTANT: Payment sheet — IBLHC Payment Details contains BOTH IBLHC + TSCL rows;
+      // TSCL Payment Details (if it exists) is usually empty. Target IBLHC first.
       const roleMap={
         'IBLHC Sales': matchSheet(wb,[['iblhc','sale'],['iblhc','sales'],['iblhc']]),
         'TSCL Sales':  matchSheet(wb,[['tscl','sale'],['tscl','sales'],['tscl']]),
-        'Payment / AR':matchSheet(wb,[['payment','detail'],['ar','aging'],['payment'],['aging'],['receivable']]),
+        'Payment / AR':matchSheet(wb,[['iblhc','payment'],['iblhc','ar'],['payment','detail'],['ar','aging'],['payment'],['aging'],['receivable']]),
         'IBLHC PO':    matchSheet(wb,[['iblhc','po'],['iblhc','purchase'],['iblhc','order']]),
         'TSCL PO':     matchSheet(wb,[['tscl','po'],['tscl','purchase'],['tscl','order']]),
       };
@@ -1276,6 +1278,9 @@ function handleFileSelect(file){
       __parsedSD=parsed;
       const totM=parsed.iblhc_m+parsed.tscl_m;
       const arM=parsed.ar_iblhc_m+parsed.ar_tscl_m;
+      // Verbose debug log to browser console
+      console.log('[MSD Upload] roleMap:', JSON.stringify(roleMap));
+      console.log('[MSD Upload] parsed SD:', JSON.stringify(parsed));
       let msg='';
       if(matched.length===0){
         msg='⚠ No sheets matched — nothing to update.\n\nSheets in your file:\n  '+sheets.join('\n  ')+'\n\nExpected sheet names containing keywords:\n  IBLHC + Sales\n  TSCL + Sales\n  Payment + Detail (or "AR Aging")\n  IBLHC + PO\n  TSCL + PO\n\nShare these sheet names so they can be mapped correctly.';
@@ -1285,10 +1290,15 @@ function handleFileSelect(file){
       } else {
         msg='✓ Matched '+matched.length+'/5 sheets:\n  '+matched.join('\n  ');
         if(missed.length)msg+='\n\nNot found (kept old values):\n  '+missed.join(', ');
-        msg+='\n\nValues to apply:\n';
+        msg+='\n\n── PARSED VALUES ──\n';
         msg+='  Sales: IBLHC '+parsed.iblhc_m+'M · TSCL '+parsed.tscl_m+'M = '+totM+'M\n';
-        msg+='  AR:    IBLHC '+parsed.ar_iblhc_m+'M · TSCL '+parsed.ar_tscl_m+'M = '+arM+'M\n';
-        msg+='  LC/BC: IBLHC '+parsed.lcbc_iblhc+'/'+parsed.po_iblhc+' · TSCL '+parsed.lcbc_tscl+'/'+parsed.po_tscl;
+        msg+='    IBLHC BL: CC '+parsed.iblhc_cc_m+'M · HC '+parsed.iblhc_hc_m+'M · MDD '+parsed.iblhc_mdd_m+'M\n';
+        msg+='    TSCL  BL: CC '+parsed.tscl_cc_m+'M · HC '+parsed.tscl_hc_m+'M\n';
+        msg+='  AR:   IBLHC '+parsed.ar_iblhc_m+'M · TSCL '+parsed.ar_tscl_m+'M = '+arM+'M\n';
+        msg+='  Aging: 0-30='+parsed.ar_0_30_m+'M · 31-60='+parsed.ar_31_60_m+'M · 61-90='+parsed.ar_61_90_m+'M\n';
+        msg+='         3-6mo='+parsed.ar_3_6_m+'M · 6-12mo='+parsed.ar_6_12_m+'M · >12mo='+parsed.ar_12_m+'M · >24mo='+parsed.ar_24_m+'M\n';
+        msg+='  LC/BC: IBLHC '+parsed.lcbc_iblhc+'/'+parsed.po_iblhc+' · TSCL '+parsed.lcbc_tscl+'/'+parsed.po_tscl+'\n';
+        msg+='\n(Check browser console — F12 → Console — for full debug log)';
         setStatus('ok',msg);
         document.getElementById('upd-apply').classList.add('ready');
         document.getElementById('upd-dl').classList.add('ready');
@@ -1323,10 +1333,17 @@ function findColIdx(headers,...kws){
   });
 }
 
+// firstCol: returns the first column index that is >=0 from a list of keyword groups.
+// Use instead of findColIdx()|| findColIdx() chains — JS treats -1 as truthy so || fails.
+function firstCol(headers,...groups){
+  for(const g of groups){const i=findColIdx(headers,...g);if(i>=0)return i;}
+  return -1;
+}
+
 function colSum(rows,idx){
   if(idx<0)return 0;
   return rows.reduce((s,r)=>{
-    const v=String(r[idx]||'').replace(/[,\s]/g,'');
+    const v=String(r[idx]!=null?r[idx]:'').replace(/[\xa0,\s]/g,'');
     const n=parseFloat(v);
     return s+(isNaN(n)?0:n);
   },0);
@@ -1494,9 +1511,13 @@ function parseExcelWbWithMap(wb,roleMap){
 
   if(iSaleName){
     const {headers,rows}=sheetToRows(wb.Sheets[iSaleName]);
-    const netIdx=findColIdx(headers,'net','sales')||findColIdx(headers,'net','value')||findColIdx(headers,'netsale');
-    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl','division')||findColIdx(headers,'bl');
+    const netIdx=firstCol(headers,['net','sales'],['net','value'],['netsale']);
+    const blIdx=firstCol(headers,['business','line'],['bl','division'],['bl']);
+    console.log('[MSD] IBLHC Sales headers:',headers);
+    console.log('[MSD] IBLHC Sales netIdx='+netIdx+' blIdx='+blIdx+' rows='+rows.length);
+    console.log('[MSD] IBLHC Sales first row sample:',rows[0]);
     const tot=colSum(rows,netIdx);
+    console.log('[MSD] IBLHC Sales total='+tot);
     if(tot>0)sd.iblhc_m=Math.round(tot/1e6);
     sd.iblhc_lines=rows.filter(r=>r.some(c=>String(c).trim())).length;
     if(blIdx>=0){
@@ -1516,9 +1537,11 @@ function parseExcelWbWithMap(wb,roleMap){
 
   if(tSaleName){
     const {headers,rows}=sheetToRows(wb.Sheets[tSaleName]);
-    const netIdx=findColIdx(headers,'net','sales')||findColIdx(headers,'net','value')||findColIdx(headers,'netsale');
-    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl','division')||findColIdx(headers,'bl');
+    const netIdx=firstCol(headers,['net','sales'],['net','value'],['netsale']);
+    const blIdx=firstCol(headers,['business','line'],['bl','division'],['bl']);
+    console.log('[MSD] TSCL Sales netIdx='+netIdx+' blIdx='+blIdx+' rows='+rows.length);
     const tot=colSum(rows,netIdx);
+    console.log('[MSD] TSCL Sales total='+tot);
     if(tot>0)sd.tscl_m=Math.round(tot/1e6);
     sd.tscl_lines=rows.filter(r=>r.some(c=>String(c).trim())).length;
     if(blIdx>=0){
@@ -1536,48 +1559,80 @@ function parseExcelWbWithMap(wb,roleMap){
 
   if(payName){
     const {headers,rows}=sheetToRows(wb.Sheets[payName]);
+    // Aging bucket column detection — '03 - 06 Months' normalises to '0306months'
     const buckets=[
-      {key:'ar_0_30_m',kws:['030','0to30','0 30','0-30']},
+      {key:'ar_0_30_m', kws:['030','0to30','0-30']},
       {key:'ar_31_60_m',kws:['3160','31to60','31-60']},
       {key:'ar_61_90_m',kws:['6190','61to90','61-90']},
-      {key:'ar_3_6_m',kws:['3to6','3 6','3-6','3mo6','36mo']},
-      {key:'ar_6_12_m',kws:['6to12','6 12','6-12','612mo']},
-      {key:'ar_12_m',kws:['12mo','12plus','12+','above12','over12','12to24']},
-      {key:'ar_24_m',kws:['24mo','24plus','24+','above24','over24']},
+      {key:'ar_3_6_m',  kws:['3to6','3-6','0306','306mo']},
+      {key:'ar_6_12_m', kws:['6to12','6-12','612','0612']},
+      {key:'ar_12_m',   kws:['12mo','12plus','12+','above12','over12']},
+      {key:'ar_24_m',   kws:['24mo','24plus','24+','above24','over24']},
     ];
-    const entityIdx=findColIdx(headers,'entity')||findColIdx(headers,'company')||findColIdx(headers,'name');
-    const outIdx=findColIdx(headers,'outstanding')||findColIdx(headers,'balance')||findColIdx(headers,'amount');
+    // 'Grand Total' column holds outstanding per entity/BL row
+    const entityIdx=firstCol(headers,['entity'],['company'],['name']);
+    const outIdx=firstCol(headers,['grand','total'],['outstanding'],['balance'],['amount'],['total']);
+    const blIdx2=firstCol(headers,['business','line'],['bl']);
     if(outIdx>=0 && entityIdx>=0){
       let iblhc=0,tscl=0;
+      let iCC=0,iHC=0,iMDD=0,tCC=0,tHC=0;
       rows.forEach(r=>{
-        const ent=String(r[entityIdx]||'').toLowerCase();
-        const v=parseFloat(String(r[outIdx]||'').replace(/[,\s]/g,''))||0;
-        if(ent.includes('iblhc'))iblhc+=v;
-        else if(ent.includes('tscl'))tscl+=v;
+        const ent=String(r[entityIdx]||'').toLowerCase().trim();
+        if(!ent||ent==='grand total')return; // skip summary row
+        const v=parseFloat(String(r[outIdx]||'').replace(/[\xa0,\s]/g,''))||0;
+        const bl=blIdx2>=0?String(r[blIdx2]||'').toLowerCase():'';
+        if(ent.includes('iblhc')){
+          iblhc+=v;
+          if(bl.includes('critical')||bl.includes('cc'))iCC+=v;
+          else if(bl.includes('hospi')||bl.includes('hc'))iHC+=v;
+          else if(bl.includes('medical')||bl.includes('mdd')||bl.includes('disposable'))iMDD+=v;
+        } else if(ent.includes('tscl')){
+          tscl+=v;
+          if(bl.includes('critical')||bl.includes('cc'))tCC+=v;
+          else if(bl.includes('hospi')||bl.includes('hc'))tHC+=v;
+        }
       });
       if(iblhc>0)sd.ar_iblhc_m=Math.round(iblhc/1e6);
       if(tscl>0)sd.ar_tscl_m=Math.round(tscl/1e6);
+      if(iCC>0)sd.iblhc_cc_ar=iCC;
+      if(iHC>0)sd.iblhc_hc_ar=iHC;
+      if(iMDD>0)sd.iblhc_mdd_ar=iMDD;
+      if(tCC>0)sd.tscl_cc_ar=tCC;
+      if(tHC>0)sd.tscl_hc_ar=tHC;
     }
+    // Aging buckets — process in order; each column index can only be claimed once
+    // This prevents '06-12 Months' from also matching the '>12 Months' bucket
+    const usedBucketIdx=new Set();
     buckets.forEach(b=>{
-      const idx=headers.findIndex(h=>{
+      const idx=headers.findIndex((h,i)=>{
+        if(usedBucketIdx.has(i))return false;
         const hc=h.toLowerCase().replace(/[^a-z0-9]/g,'');
         return b.kws.some(k=>hc.includes(k.replace(/[^a-z0-9]/g,'')));
       });
-      if(idx>=0){const s=colSum(rows,idx);if(s>0)sd[b.key]=Math.round(s/1e6);}
+      if(idx>=0){
+        usedBucketIdx.add(idx);
+        let s=0;
+        rows.forEach(r=>{
+          const ent=String(r[entityIdx>=0?entityIdx:0]||'').toLowerCase().trim();
+          if(ent==='grand total')return; // skip summary row
+          s+=parseFloat(String(r[idx]||'').replace(/[\xa0,\s]/g,''))||0;
+        });
+        if(s>0)sd[b.key]=Math.round(s/1e6);
+      }
     });
   }
 
   if(iPOName){
     const {headers,rows}=sheetToRows(wb.Sheets[iPOName]);
-    const lcbcIdx=findColIdx(headers,'lc','bc')||findColIdx(headers,'lcbc');
+    const lcbcIdx=firstCol(headers,['lc','bc'],['lcbc']);
     const filled=rows.filter(r=>r.some(c=>String(c).trim()));
     sd.po_iblhc=filled.length;
     if(lcbcIdx>=0){
       sd.lcbc_iblhc=filled.filter(r=>['yes','y','1','true'].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
       sd.lcbc_iblhc_pend=filled.filter(r=>['no','n','0','false',''].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
     }
-    const arIdx=findColIdx(headers,'outstanding')||findColIdx(headers,'ar','amount');
-    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl');
+    const arIdx=firstCol(headers,['outstanding'],['ar','amount']);
+    const blIdx=firstCol(headers,['business','line'],['bl']);
     if(arIdx>=0 && blIdx>=0){
       let cc=0,hc=0,mdd=0;
       filled.forEach(r=>{
@@ -1595,15 +1650,15 @@ function parseExcelWbWithMap(wb,roleMap){
 
   if(tPOName){
     const {headers,rows}=sheetToRows(wb.Sheets[tPOName]);
-    const lcbcIdx=findColIdx(headers,'lc','bc')||findColIdx(headers,'lcbc');
+    const lcbcIdx=firstCol(headers,['lc','bc'],['lcbc']);
     const filled=rows.filter(r=>r.some(c=>String(c).trim()));
     sd.po_tscl=filled.length;
     if(lcbcIdx>=0){
       sd.lcbc_tscl=filled.filter(r=>['yes','y','1','true'].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
       sd.lcbc_tscl_pend=filled.filter(r=>['no','n','0','false',''].includes(String(r[lcbcIdx]||'').trim().toLowerCase())).length;
     }
-    const arIdx=findColIdx(headers,'outstanding')||findColIdx(headers,'ar','amount');
-    const blIdx=findColIdx(headers,'business','line')||findColIdx(headers,'bl');
+    const arIdx=firstCol(headers,['outstanding'],['ar','amount']);
+    const blIdx=firstCol(headers,['business','line'],['bl']);
     if(arIdx>=0 && blIdx>=0){
       let cc=0,hc=0;
       filled.forEach(r=>{
@@ -1622,11 +1677,16 @@ function parseExcelWbWithMap(wb,roleMap){
 
 function applyParsed(){
   if(!__parsedSD){return;}
-  SD=__parsedSD;
-  applyStatics(SD);
-  destroyCharts();
-  buildCharts();
-  closeUpload();
+  try{
+    SD=__parsedSD;
+    applyStatics(SD);
+    destroyCharts();
+    buildCharts();
+    closeUpload();
+  }catch(e){
+    setStatus('err','Apply error: '+e.message+'\n\nOpen browser console (F12 → Console) for details.');
+    console.error('[MSD Apply error]',e);
+  }
 }
 
 function genDownloadHTML(newSD){
